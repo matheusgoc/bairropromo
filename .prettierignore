@@ -1,0 +1,8 @@
+/.expo
+node_modules
+build
+coverage
+android
+ios
+assets
+.vscode
