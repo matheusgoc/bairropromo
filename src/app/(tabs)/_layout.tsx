@@ -4,35 +4,32 @@ import { Icon } from 'react-native-paper';
 
 const TabsLayout: FC = () => {
   return (
-    <Tabs initialRouteName="(offer)/offer-list">
+    <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen
-        name="(place)/place-list"
+        name="place"
         options={{
           title: 'Bairro',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Icon source="map-marker-multiple" color={color} size={24} />
           ),
-          headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="(offer)/offer-list"
+        name="offer/offer-list"
         options={{
           title: 'Promoções',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Icon source="percent" color={color} size={24} />
           ),
-          headerShown: false,
         }}
       />
       <Tabs.Screen
-        name="(profile)/profile-menu"
+        name="profile/profile-menu"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Icon source="account-details" color={color} size={24} />
           ),
-          headerShown: false,
         }}
       />
     </Tabs>
