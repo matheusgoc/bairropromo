@@ -12,6 +12,7 @@ import {
   MD3LightTheme,
   PaperProvider,
 } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -37,10 +38,12 @@ export default function RootLayout() {
         };
 
   return (
-    <ThemeProvider value={navTheme}>
-      <PaperProvider theme={paperTheme}>
-        <Slot />
-      </PaperProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={navTheme}>
+        <PaperProvider theme={paperTheme}>
+          <Slot />
+        </PaperProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
