@@ -1,4 +1,4 @@
-import PromotionModel from '@/models/promotion.model';
+import OfferModel from '@/models/offer.model';
 
 interface PlaceWorkingHours {
   weekDay: string;
@@ -23,7 +23,7 @@ interface PlaceModel {
   phone?: string;
   isWhatsapp?: boolean;
   email?: string;
-  promotions: PromotionModel[];
+  offers: OfferModel[];
   workingHours: PlaceWorkingHours[];
 }
 

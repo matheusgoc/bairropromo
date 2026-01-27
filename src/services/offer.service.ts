@@ -1,0 +1,83 @@
+import ListModel from '@/models/list.model';
+import OfferModel from '@/models/offer.model';
+
+const OfferService = {
+  list: async (page: number): Promise<ListModel<OfferModel>> => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    return {
+      data: Array.from({ length: 20 }, (_, i) => ({
+        id: ((page - 1) * 20 + i + 1).toString(),
+        title: `Offer ${(page - 1) * 20 + i + 1} - Nulla congue nulla ligula, a porttitor erat tempus nec. Integer vel tortor vulputate, consectetur nisi sit amet, lacinia tellus`,
+        description: `Description for offer ${(page - 1) * 20 + i + 1}`,
+        discount: 10 + i,
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        isActive: true,
+        place: {
+          id: (i + 1).toString(),
+          name: `Place ${i + 1}`,
+          logo:
+            Math.random() < 0.5 ? 'https://picsum.photos/200/300' : undefined,
+        },
+      })),
+      meta: {
+        page: page,
+        take: page * 20,
+        itemCount: 100,
+        pageCount: 5,
+        hasPreviousPage: page > 1,
+        hasNextPage: page * 20 < 100,
+      },
+    };
+  },
+
+  getCode: async (id: string): Promise<{ code: string; offer: OfferModel }> => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    return {
+      code: Math.ceil(Math.random() * 1000000).toString(),
+      offer: {
+        id: '1',
+        title:
+          'Na compra de 1 prato ganhe 50% de desconto no segundo de menor valor.',
+        discount: 10,
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        isActive: true,
+        place: {
+          id: '1',
+          name: 'Sample Place 1',
+          logo:
+            Math.random() < 0.5 ? 'https://picsum.photos/200/300' : undefined,
+        },
+      },
+    };
+  },
+
+  assign: async (id: string) => {
+    // Logic to assign an offer to a user
+  },
+
+  unassign: async (id: string) => {
+    // Logic to unassign an offer from a user
+  },
+
+  add: async (offer: Partial<OfferModel>) => {
+    // Logic to create a new offer
+  },
+
+  update: async (id: string, offer: Partial<OfferModel>) => {
+    // Logic to update an existing offer
+  },
+
+  disable: async (id: string) => {
+    // Logic to disable an offer
+  },
+
+  enable: async (id: string) => {
+    // Logic to enable an offer
+  },
+};
+
+export default OfferService;

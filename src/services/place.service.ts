@@ -19,7 +19,7 @@ const mockPlace: PlaceModel = {
   isWhatsapp: true,
   email: 'place@mockplace.com.br',
   website: 'https://mockplace.com.br',
-  promotions: [
+  offers: [
     {
       id: '1',
       title:
@@ -84,6 +84,10 @@ const PlaceService = {
 
   update: async (id: string, placeData: any) => {
     // Logic to update an existing place
+  },
+
+  enable: async (id: string) => {
+    // Logic to enable a place by its ID
   },
 
   disable: async (id: string) => {

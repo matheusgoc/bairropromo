@@ -79,13 +79,13 @@ const PlaceView: FC = () => {
       />
       <List.Section>
         <List.Subheader>Promoções</List.Subheader>
-        {place.promotions?.length === 0 ? (
+        {place.offers?.length === 0 ? (
           <>
             <List.Item title="Nenhuma promoção no momento!" />
             <Divider />
           </>
         ) : (
-          place.promotions?.map((p, i) => (
+          place.offers?.map((p, i) => (
             <View key={p.id} style={styles.promoItemContainer}>
               <List.Item
                 title={p.title}
@@ -97,7 +97,7 @@ const PlaceView: FC = () => {
                   />
                 )}
               />
-              {i < place.promotions.length - 1 && <Divider />}
+              {i < place.offers.length - 1 && <Divider />}
             </View>
           ))
         )}

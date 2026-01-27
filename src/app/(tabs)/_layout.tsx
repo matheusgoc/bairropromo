@@ -15,7 +15,7 @@ const TabsLayout: FC = () => {
         }}
       />
       <Tabs.Screen
-        name="offer/offer-list"
+        name="offer"
         options={{
           title: 'Promoções',
           tabBarIcon: ({ color }) => (

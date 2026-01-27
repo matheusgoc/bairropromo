@@ -55,12 +55,12 @@ const Place: FC<PlaceProps> = memo(({ place }) => {
           <Text variant="bodySmall" style={{ marginBottom: 10 }}>
             Promoções
           </Text>
-          {place.promotions?.length === 0 ? (
+          {place.offers?.length === 0 ? (
             <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
               Nenhuma promoção no momento!
             </Text>
           ) : (
-            place.promotions?.slice(0, 3).map((p, i) => (
+            place.offers?.slice(0, 3).map((p, i) => (
               <View key={p.id}>
                 <Text variant="labelLarge">{p.title}</Text>
                 {i < 2 ? <Divider style={{ marginVertical: 8 }} /> : null}
