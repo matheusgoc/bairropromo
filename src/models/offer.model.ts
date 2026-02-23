@@ -6,7 +6,7 @@ interface OfferModel {
   discount?: number;
   start?: string;
   end?: string;
-  isActive: boolean;
+  status: 'expired' | 'used' | 'canceled' | 'active';
   place?: Pick<PlaceModel, 'id' | 'name' | 'logo'>;
 }
 

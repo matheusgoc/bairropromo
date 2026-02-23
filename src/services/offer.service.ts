@@ -8,17 +8,23 @@ const OfferService = {
     return {
       data: Array.from({ length: 20 }, (_, i) => ({
         id: ((page - 1) * 20 + i + 1).toString(),
-        title: `Offer ${(page - 1) * 20 + i + 1} - Nulla congue nulla ligula, a porttitor erat tempus nec. Integer vel tortor vulputate, consectetur nisi sit amet, lacinia tellus`,
+        title: `Offer ${(page - 1) * 20 + i + 1} - Nulla congue nulla ligula, a porttitor erat tempus nec. Integer vel  vulputate, consectetur nisi sit amet, tellus`,
         description: `Description for offer ${(page - 1) * 20 + i + 1}`,
         discount: 10 + i,
         start: new Date().toISOString(),
         end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        isActive: true,
+        status:
+          page > 1
+            ? (['used', 'expired', 'canceled'][
+                Math.floor(Math.random() * 3)
+              ] as OfferModel['status'])
+            : 'active',
         place: {
           id: (i + 1).toString(),
           name: `Place ${i + 1}`,
-          logo:
-            Math.random() < 0.5 ? 'https://picsum.photos/200/300' : undefined,
+          logo: ['https://picsum.photos/200/300', undefined, 'expired'][
+            Math.floor(Math.random() * 2)
+          ],
         },
       })),
       meta: {
@@ -44,7 +50,7 @@ const OfferService = {
         discount: 10,
         start: new Date().toISOString(),
         end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        isActive: true,
+        status: 'active',
         place: {
           id: '1',
           name: 'Sample Place 1',

@@ -4,6 +4,7 @@ import { FC, memo, useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Avatar,
+  Badge,
   Divider,
   Icon,
   List as RNPList,
@@ -19,12 +20,40 @@ import { extractInitials } from '@/helpers';
 import OfferModel from '@/models/offer.model';
 import OfferService from '@/services/offer.service';
 
+const statusLabel: Record<OfferModel['status'], string> = {
+  canceled: 'promoção cancelada',
+  expired: 'promoção encerrada',
+  used: 'promoção utilizada',
+  active: 'ativa',
+};
+
+const StatusBadge = memo(({ status }: { status: OfferModel['status'] }) => {
+  const theme = useTheme();
+  return (
+    <Badge
+      style={{
+        fontSize: 12,
+        backgroundColor: theme.colors.outline,
+        alignSelf: 'flex-start',
+        marginHorizontal: 10,
+        marginBottom: 10,
+        marginLeft: 75,
+        paddingHorizontal: 20,
+      }}
+    >
+      {statusLabel[status]}
+    </Badge>
+  );
+});
+
+StatusBadge.displayName = 'StatusBadge';
+
 interface OfferProps {
   offer: Partial<OfferModel>;
 }
 
 const Offer: FC<OfferProps> = memo(({ offer }) => {
-  const styles = usePlaceStyles();
+  const styles = usePlaceStyles(offer?.status ?? 'active');
   const showOfferCode = () => {
     router.navigate({
       pathname: '/offer/offer-code/[id]',
@@ -33,18 +62,17 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
   };
 
   return (
-    <>
+    <View>
       <RNPList.Item
         title={offer.place?.name}
         titleNumberOfLines={2}
-        titleStyle={{
-          marginBottom: 10,
-          marginTop: 5,
-        }}
         description={offer.title}
         descriptionNumberOfLines={4}
+        containerStyle={styles.container}
+        contentStyle={styles.content}
+        titleStyle={styles.title}
         left={() =>
-          offer?.place?.logo ? (
+          offer.place?.logo ? (
             <Image
               source={offer.place.logo}
               contentFit="cover"
@@ -53,28 +81,55 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
               style={styles.logo}
             />
           ) : (
-            <Avatar.Text size={50} label={extractInitials(offer.place?.name)} />
+            <Avatar.Text
+              size={50}
+              label={extractInitials(offer.place?.name)}
+              style={styles.avatar}
+            />
           )
         }
-        right={() => <RNPList.Icon icon="qrcode" />}
+        right={() =>
+          offer.status === 'active' ? (
+            <RNPList.Icon icon="qrcode" style={styles.qrcodeIcon} />
+          ) : undefined
+        }
         onPress={showOfferCode}
-        style={{ marginHorizontal: 10 }}
       />
+      {offer.status && offer.status !== 'active' ? (
+        <StatusBadge status={offer.status} />
+      ) : null}
       <Divider />
-    </>
+    </View>
   );
 });
 
 Offer.displayName = 'Offer';
 
-const usePlaceStyles = () =>
-  StyleSheet.create({
+const usePlaceStyles = (status: OfferModel['status']) => {
+  return StyleSheet.create({
     logo: {
       width: 50,
       height: 50,
       borderRadius: 50,
+      opacity: status === 'active' ? 1 : 0.5,
+    },
+    avatar: {
+      opacity: status === 'active' ? 1 : 0.5,
+    },
+    container: {
+      marginLeft: 10,
+    },
+    content: {
+      opacity: status === 'active' ? 1 : 0.5,
+    },
+    title: {
+      marginBottom: 10,
+    },
+    qrcodeIcon: {
+      padding: 15,
     },
   });
+};
 
 const OfferList: FC = () => {
   const [loading, setLoading] = useState(false);
