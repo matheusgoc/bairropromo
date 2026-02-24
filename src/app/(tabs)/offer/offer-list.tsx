@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
@@ -8,6 +9,7 @@ import {
   Divider,
   Icon,
   List as RNPList,
+  Text,
   useTheme,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -95,6 +97,11 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
         }
         onPress={showOfferCode}
       />
+      {offer.end && (
+        <Text variant="labelSmall" style={styles.expiration}>
+          Válido até {dayjs(offer.end).format('DD/MM/YYYY [às] hh:mm')}.
+        </Text>
+      )}
       {offer.status && offer.status !== 'active' ? (
         <StatusBadge status={offer.status} />
       ) : null}
@@ -106,6 +113,7 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
 Offer.displayName = 'Offer';
 
 const usePlaceStyles = (status: OfferModel['status']) => {
+  const theme = useTheme();
   return StyleSheet.create({
     logo: {
       width: 50,
@@ -127,6 +135,13 @@ const usePlaceStyles = (status: OfferModel['status']) => {
     },
     qrcodeIcon: {
       padding: 15,
+    },
+    expiration: {
+      marginLeft: 75,
+      paddingBottom: 10,
+      fontWeight: 'bold',
+      color: theme.colors.tertiary,
+      opacity: status === 'active' ? 1 : 0.5,
     },
   });
 };

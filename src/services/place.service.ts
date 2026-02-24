@@ -24,17 +24,17 @@ const mockPlace: PlaceModel = {
       id: '1',
       title:
         'Na compra de 1 prato ganhe 50% de desconto no segundo de menor valor.',
-      isActive: true,
+      status: 'active',
     },
     {
       id: '2',
       title: 'Compre 1 pizza e ganhe uma Coca-Cola grátis.',
-      isActive: true,
+      status: 'active',
     },
     {
       id: '3',
       title: 'Desconto de 20% em todas as sobremesas nas sextas-feiras.',
-      isActive: true,
+      status: 'active',
     },
   ],
   workingHours: [
