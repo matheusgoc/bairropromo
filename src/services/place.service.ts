@@ -1,14 +1,10 @@
 import ListModel from '@/models/list.model';
+import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel from '@/models/place.model';
 
-const mockPlace: PlaceModel = {
+const mockLoaction: PlaceLocationModel = {
   id: '1',
-  name: 'Sample Place 1',
-  description:
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pulvinar purus a eros suscipit, non tempor purus congue. Pellentesque sem lectus, dapibus id tempus nec, pulvinar vel enim. Quisque tristique dignissim tortor sit amet tincidunt. Proin ut leo tortor. Proin sed metus egestas sem malesuada facilisis. In id sodales elit, vitae sagittis massa. Praesent fringilla ex id lectus egestas lobortis. Nunc ut tincidunt nulla, eu faucibus neque. Praesent metus arcu, vulputate vel odio a, ornare tempus turpis.',
-  category: 'Restaurante',
-  photo: 'https://picsum.photos/200/300',
-  logo: 'https://picsum.photos/200/300',
+  name: 'Centro',
   city: 'São José do Vale do Rio Preto',
   state: 'MG',
   address: 'ZZZ 999 Bloco Z Loja 99',
@@ -18,7 +14,48 @@ const mockPlace: PlaceModel = {
   phone: '61 99999-9999',
   isWhatsapp: true,
   email: 'place@mockplace.com.br',
+  workingHours: [
+    { weekDay: 'Segunda', start: '15:00', end: '23:00' },
+    { weekDay: 'Terça', start: '15:00', end: '23:00' },
+    { weekDay: 'Quarta', start: '15:00', end: '23:00' },
+    { weekDay: 'Quinta', start: '15:00', end: '23:00' },
+    { weekDay: 'Sexta', start: '15:00', end: '23:00' },
+    { weekDay: 'Sábado', start: '15:00', end: '23:00' },
+  ],
+  offers: [
+    {
+      id: '1',
+      title: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+      status: 'active',
+    },
+    {
+      id: '2',
+      title: 'Cras eu maximus velit.',
+      status: 'active',
+    },
+    {
+      id: '3',
+      title:
+        'Mauris at elit a orci fermentum scelerisque vestibulum vitae leo.',
+      status: 'active',
+    },
+  ],
+};
+
+const mockPlace: PlaceModel = {
+  id: '1',
+  name: 'Sample Place 1',
+  description:
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pulvinar purus a eros suscipit, non tempor purus congue. Pellentesque sem lectus, dapibus id tempus nec, pulvinar vel enim. Quisque tristique dignissim tortor sit amet tincidunt. Proin ut leo tortor. Proin sed metus egestas sem malesuada facilisis. In id sodales elit, vitae sagittis massa. Praesent fringilla ex id lectus egestas lobortis. Nunc ut tincidunt nulla, eu faucibus neque. Praesent metus arcu, vulputate vel odio a, ornare tempus turpis.',
+  category: 'Restaurante',
+  photo: 'https://picsum.photos/200/300',
+  logo: 'https://picsum.photos/200/300',
   website: 'https://mockplace.com.br',
+  locations: Array.from({ length: 3 }).map((_, i) => ({
+    ...mockLoaction,
+    id: i.toString(),
+    name: ['Centro', 'Ponte Nova', 'Bom Jardim'][i],
+  })),
   offers: [
     {
       id: '1',
@@ -36,14 +73,6 @@ const mockPlace: PlaceModel = {
       title: 'Desconto de 20% em todas as sobremesas nas sextas-feiras.',
       status: 'active',
     },
-  ],
-  workingHours: [
-    { weekDay: 'Segunda', start: '15:00', end: '23:00' },
-    { weekDay: 'Terça', start: '15:00', end: '23:00' },
-    { weekDay: 'Quarta', start: '15:00', end: '23:00' },
-    { weekDay: 'Quinta', start: '15:00', end: '23:00' },
-    { weekDay: 'Sexta', start: '15:00', end: '23:00' },
-    { weekDay: 'Sábado', start: '15:00', end: '23:00' },
   ],
 };
 

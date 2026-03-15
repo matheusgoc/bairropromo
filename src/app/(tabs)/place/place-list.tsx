@@ -47,9 +47,6 @@ const Place: FC<PlaceProps> = memo(({ place }) => {
       <Card.Content style={styles.content}>
         <View>
           <Text variant="titleLarge">{place.name}</Text>
-          <Text variant="labelSmall" style={{ textTransform: 'uppercase' }}>
-            {place.city} - {place.state}
-          </Text>
         </View>
         <View style={{ marginTop: 10 }}>
           <Text variant="bodySmall" style={{ marginBottom: 10 }}>

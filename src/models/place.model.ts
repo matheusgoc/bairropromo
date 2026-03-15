@@ -1,10 +1,5 @@
 import OfferModel from '@/models/offer.model';
-
-interface PlaceWorkingHours {
-  weekDay: string;
-  start: string;
-  end: string;
-}
+import PlaceLocation from '@/models/place-location.model';
 
 interface PlaceModel {
   id: string;
@@ -14,17 +9,8 @@ interface PlaceModel {
   photo: string;
   logo?: string;
   website?: string;
-  city: string;
-  state: string;
-  address: string;
-  postalCode: string;
-  lat?: string;
-  lon?: string;
-  phone?: string;
-  isWhatsapp?: boolean;
-  email?: string;
+  locations: PlaceLocation[];
   offers: OfferModel[];
-  workingHours: PlaceWorkingHours[];
 }
 
 export default PlaceModel;

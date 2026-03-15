@@ -1,3 +1,4 @@
+import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel from '@/models/place.model';
 
 interface OfferModel {
@@ -8,6 +9,7 @@ interface OfferModel {
   end?: string;
   status: 'expired' | 'used' | 'canceled' | 'active';
   place?: Pick<PlaceModel, 'id' | 'name' | 'logo'>;
+  locations?: Pick<PlaceLocationModel, 'id' | 'name' | 'city' | 'state'>[];
 }
 
 export default OfferModel;
