@@ -66,7 +66,16 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
   return (
     <View>
       <RNPList.Item
-        title={offer.place?.name}
+        title={
+          <View>
+            <Text variant="titleMedium">{offer.place?.name}</Text>
+            {offer.location && (
+              <Text variant="titleSmall">
+                {`${offer.location.name} | ${offer.location.city} - ${offer.location.state}`}
+              </Text>
+            )}
+          </View>
+        }
         titleNumberOfLines={2}
         description={offer.title}
         descriptionNumberOfLines={4}
@@ -95,7 +104,7 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
             <RNPList.Icon icon="qrcode" style={styles.qrcodeIcon} />
           ) : undefined
         }
-        onPress={showOfferCode}
+        onPress={offer.status === 'active' ? showOfferCode : undefined}
       />
       {offer.end && (
         <Text variant="labelSmall" style={styles.expiration}>

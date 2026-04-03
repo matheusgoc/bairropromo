@@ -9,7 +9,7 @@ interface OfferModel {
   end?: string;
   status: 'expired' | 'used' | 'canceled' | 'active';
   place?: Pick<PlaceModel, 'id' | 'name' | 'logo'>;
-  locations?: Pick<PlaceLocationModel, 'id' | 'name' | 'city' | 'state'>[];
+  location?: Pick<PlaceLocationModel, 'id' | 'name' | 'city' | 'state'>;
 }
 
 export default OfferModel;

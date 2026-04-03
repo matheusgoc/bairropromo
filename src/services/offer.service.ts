@@ -26,6 +26,20 @@ const OfferService = {
             Math.floor(Math.random() * 2)
           ],
         },
+        location:
+          Math.random() < 0.5
+            ? undefined
+            : {
+                id: (i + 1).toString(),
+                name: `Location ${i + 1}`,
+                city: [
+                  'São José do Vale do Rio Preto',
+                  'Belo Horizonte',
+                  'Uberlândia',
+                  'Araguari',
+                ][Math.floor(Math.random() * 4)],
+                state: 'MG',
+              },
       })),
       meta: {
         page: page,
@@ -53,10 +67,19 @@ const OfferService = {
         status: 'active',
         place: {
           id: '1',
-          name: 'Sample Place 1',
+          name: 'Pão de Queijo da Vovó Zizi',
           logo:
             Math.random() < 0.5 ? 'https://picsum.photos/200/300' : undefined,
         },
+        location:
+          Math.random() < 0
+            ? undefined
+            : {
+                id: '1',
+                name: 'Coronel Francisco Limongi',
+                city: 'São José do Vale do Rio Preto',
+                state: 'MG',
+              },
       },
     };
   },

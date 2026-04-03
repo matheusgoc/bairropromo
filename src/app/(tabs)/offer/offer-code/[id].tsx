@@ -15,6 +15,7 @@ import OfferService from '@/services/offer.service';
 const OfferCode: FC = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = useTheme();
 
   const [loading, setLoading] = useState<boolean>();
   const [code, setCode] = useState<string>();
@@ -44,7 +45,7 @@ const OfferCode: FC = () => {
   return (
     <SafeAreaView
       style={{
-        gap: 20,
+        gap: 10,
         margin: 20,
         alignItems: 'center',
       }}
@@ -65,8 +66,25 @@ const OfferCode: FC = () => {
       ) : (
         <Avatar.Text size={80} label={extractInitials(offer.place?.name)} />
       )}
-      <Text variant="headlineLarge">{offer.place?.name}</Text>
-      <Text variant="labelLarge" style={{ marginVertical: 30 }}>
+      <View>
+        <Text variant="headlineMedium" style={{ textAlign: 'center' }}>
+          {offer.place?.name}
+        </Text>
+        {offer.location && (
+          <>
+            <Text variant="titleMedium" style={{ textAlign: 'center' }}>
+              {offer.location.name}
+            </Text>
+            <Text variant="titleMedium" style={{ textAlign: 'center' }}>
+              {`${offer.location.city} - ${offer.location.state}`}
+            </Text>
+          </>
+        )}
+      </View>
+      <Text
+        variant="titleMedium"
+        style={{ marginVertical: 30, fontWeight: 'bold', textAlign: 'center' }}
+      >
         {offer.title}
       </Text>
       <Text variant="labelMedium">
@@ -74,6 +92,25 @@ const OfferCode: FC = () => {
       </Text>
       <QRCode value={code} />
       <Text variant="headlineLarge">{code}</Text>
+      {offer.location && (
+        <Text
+          variant="labelMedium"
+          style={{
+            fontStyle: 'italic',
+            textAlign: 'center',
+            width: '100%',
+            backgroundColor: theme.colors.surfaceVariant,
+            padding: 10,
+            borderRadius: 5,
+          }}
+        >
+          <Text style={{ fontWeight: 'bold' }}>Atenção: </Text>
+          <Text>promoção valida apenas em </Text>
+          <Text style={{ fontWeight: 'bold', color: theme.colors.tertiary }}>
+            {`${offer.location.name} (${offer.location.city} - ${offer.location.state})`}
+          </Text>
+        </Text>
+      )}
       <Button
         mode="contained"
         style={{ marginTop: 50 }}
