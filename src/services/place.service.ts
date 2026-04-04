@@ -47,7 +47,7 @@ const mockPlace: PlaceModel = {
   name: 'Sample Place 1',
   description:
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pulvinar purus a eros suscipit, non tempor purus congue. Pellentesque sem lectus, dapibus id tempus nec, pulvinar vel enim. Quisque tristique dignissim tortor sit amet tincidunt. Proin ut leo tortor. Proin sed metus egestas sem malesuada facilisis. In id sodales elit, vitae sagittis massa. Praesent fringilla ex id lectus egestas lobortis. Nunc ut tincidunt nulla, eu faucibus neque. Praesent metus arcu, vulputate vel odio a, ornare tempus turpis.',
-  category: 'Restaurante',
+  category: { id: '1', name: 'Alimentação e Bebidas' },
   photo: 'https://picsum.photos/200/300',
   logo: 'https://picsum.photos/200/300',
   website: 'https://mockplace.com.br',
