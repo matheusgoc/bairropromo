@@ -1,0 +1,237 @@
+import { FC, memo, useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
+import SkeletonText from '@/components/ui/skeleton/skeleton-text';
+import { extractInitials } from '@/helpers';
+import ProfileModel from '@/models/profile.model';
+import ProfileService from '@/services/profile.service';
+
+const SignedOutView: FC = () => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 15 }}>
+    <Text variant="titleMedium" style={{ margin: 20 }}>
+      Seja bem-vindo(a)!
+    </Text>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 20,
+      }}
+    >
+      <Text variant="titleMedium">
+        Faça parte do Bairro e aproveite as ofertas!
+      </Text>
+      <Button mode="contained" icon="login" onPress={() => {}}>
+        Entrar
+      </Button>
+    </View>
+  </SafeAreaView>
+);
+
+const SubscriptionSuccessCard: FC = () => (
+  <Card mode="contained" style={{ marginTop: 20 }}>
+    <Card.Title title="Minha Assinatura" titleStyle={{ fontWeight: 'bold' }} />
+    <Card.Content>
+      <Text variant="bodyMedium">
+        Parabéns! A sua inscrição já está completa.
+      </Text>
+      <Text variant="bodyMedium" style={{ marginVertical: 10 }}>
+        Aproveite as promoções exclusivas do seu bairro.
+      </Text>
+    </Card.Content>
+    <Card.Actions style={{ justifyContent: 'center', marginBottom: 10 }}>
+      <Button mode="contained">Querto modificar minha assinatura!</Button>
+    </Card.Actions>
+  </Card>
+);
+
+const SubscriptionPendingCard: FC = () => (
+  <Card mode="contained" style={{ marginTop: 20 }}>
+    <Card.Title title="Minha Assinatura" titleStyle={{ fontWeight: 'bold' }} />
+    <Card.Content>
+      <Text variant="bodyMedium">
+        Opa! Estamos passando por dificuldades para realizar o pagamento da sua
+        assinatura.
+      </Text>
+    </Card.Content>
+    <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
+      <Button mode="contained">Regularizar minha assinatura</Button>
+    </Card.Actions>
+  </Card>
+);
+
+const SubscriptionNotAppliedCard: FC = () => (
+  <Card mode="contained" style={{ marginTop: 20 }}>
+    <Card.Title title="Minha Assinatura" titleStyle={{ fontWeight: 'bold' }} />
+    <Card.Content>
+      <Text variant="bodyMedium">
+        Seja membro e aproveite as ofertas exclusivas do seu bairro.
+      </Text>
+      <Divider style={{ marginVertical: 10 }} />
+      <View style={{ alignItems: 'center' }}>
+        <Text
+          variant="titleMedium"
+          style={{ alignSelf: 'flex-start', marginBottom: 10 }}
+        >
+          Por apenas:
+        </Text>
+        <Text
+          variant="headlineLarge"
+          style={{ fontWeight: 'bold', fontSize: 38 }}
+        >
+          R$ 9,90 <Text variant="bodyMedium">por mês</Text>
+        </Text>
+      </View>
+    </Card.Content>
+    <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
+      <Button mode="contained">Quero ser membro do bairro!</Button>
+    </Card.Actions>
+  </Card>
+);
+
+const MyPlacesCard: FC = () => (
+  <Card mode="contained" style={{ marginTop: 20 }}>
+    <Card.Title title="Meus Locais" titleStyle={{ fontWeight: 'bold' }} />
+    <Card.Content>
+      <Text variant="bodyMedium">Você possui um perfil empreendedor.</Text>
+      <Divider style={{ marginVertical: 10 }} />
+      <Text variant="bodyMedium" style={{ fontWeight: 'bold' }}>
+        Locais: 2 ativos de 3.
+      </Text>
+      <Text variant="bodyMedium" style={{ fontWeight: 'bold' }}>
+        Promoções: 10 ativas de 100.
+      </Text>
+      <Divider style={{ marginVertical: 10 }} />
+    </Card.Content>
+    <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
+      <Button mode="contained">Gerenciar Locais</Button>
+    </Card.Actions>
+  </Card>
+);
+
+const MyPlacesNotAppliedCard: FC = () => (
+  <Card mode="contained" style={{ marginTop: 20 }}>
+    <Card.Title title="Meus Locais" titleStyle={{ fontWeight: 'bold' }} />
+    <Card.Content>
+      <Text variant="bodyMedium">
+        Você administra algum negócio local e gostaria de compartilhar
+        promoções, descontos e ofertas no bairro?
+      </Text>
+      <Text variant="bodyMedium">Faça parte da nossa comunidade!</Text>
+    </Card.Content>
+    <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
+      <Button mode="contained">Cadastrar Locais</Button>
+    </Card.Actions>
+  </Card>
+);
+
+const IS_SIGNED_OUT = false; // @todo: implement auth context
+
+const ProfileView: FC = () => {
+  const [profile, setProfile] = useState<ProfileModel | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    if (IS_SIGNED_OUT) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await ProfileService.get();
+      setProfile(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load profile', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  if (loading) {
+    return <LoadingSkeleton />;
+  }
+
+  if (!profile) {
+    return <SignedOutView />;
+  }
+
+  const isOwner = ['owner', 'admin', 'master'].includes(profile?.role ?? '');
+  const greeting =
+    profile?.gender === 'F' ? 'Seja bem-vinda,' : 'Seja bem-vindo,';
+
+  return (
+    <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 15 }}>
+      <Text variant="titleMedium" style={{ margin: 20 }}>
+        {greeting}
+      </Text>
+      <View style={{ alignItems: 'center' }}>
+        <Avatar.Text size={80} label={extractInitials(profile.name)} />
+        <Text variant="headlineMedium">{profile.name}</Text>
+      </View>
+      <ScrollView>
+        {profile.subscriptionStatus === 'success' && (
+          <SubscriptionSuccessCard />
+        )}
+        {profile.subscriptionStatus === 'not_applied' && (
+          <SubscriptionNotAppliedCard />
+        )}
+        {profile.subscriptionStatus === 'pending' && (
+          <SubscriptionPendingCard />
+        )}
+        {isOwner ? <MyPlacesCard /> : <MyPlacesNotAppliedCard />}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const LoadingSkeleton: FC = memo(() => (
+  <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 15 }}>
+    <Text variant="titleMedium" style={{ margin: 20 }}>
+      Seja bem-vindo(a),
+    </Text>
+    <View style={{ alignItems: 'center', gap: 12, marginBottom: 10 }}>
+      <SkeletonCircle size={80} />
+      <SkeletonText width="70%" height={28} />
+    </View>
+    <ScrollView>
+      <Card mode="contained" style={{ marginTop: 20 }}>
+        <Card.Title
+          title="Minha Assinatura"
+          titleStyle={{ fontWeight: 'bold' }}
+        />
+        <Card.Content style={{ gap: 10 }}>
+          <SkeletonText width="90%" height={14} />
+          <SkeletonText width="70%" height={14} />
+        </Card.Content>
+        <View style={{ alignItems: 'center', marginTop: 25, marginBottom: 15 }}>
+          <SkeletonText width="45%" height={36} />
+        </View>
+      </Card>
+      <Card mode="contained" style={{ marginTop: 20 }}>
+        <Card.Title title="Meus Locais" titleStyle={{ fontWeight: 'bold' }} />
+        <Card.Content style={{ gap: 10 }}>
+          <SkeletonText width="70%" height={14} />
+          <Divider style={{ marginVertical: 10 }} />
+          <SkeletonText width="50%" height={14} />
+          <SkeletonText width="55%" height={14} />
+        </Card.Content>
+        <View style={{ alignItems: 'center', marginTop: 25, marginBottom: 15 }}>
+          <SkeletonText width="45%" height={36} />
+        </View>
+      </Card>
+    </ScrollView>
+  </SafeAreaView>
+));
+
+LoadingSkeleton.displayName = 'LoadingSkeleton';
+
+export default ProfileView;
