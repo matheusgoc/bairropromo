@@ -1,7 +1,8 @@
+import { useInfiniteQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Avatar,
@@ -156,50 +157,43 @@ const usePlaceStyles = (status: OfferModel['status']) => {
 };
 
 const OfferList: FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [offers, setOffers] = useState<OfferModel[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [page, setPage] = useState(1);
+  const {
+    data,
+    isPending,
+    isRefetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['offers'],
+    queryFn: ({ pageParam }) => OfferService.list(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+  });
 
-  const load = useCallback(async (page: number) => {
-    setLoading(true);
-    try {
-      const { data, meta } = await OfferService.list(page);
-      setOffers((offers) => (page === 1 ? data : [...offers, ...data]));
-      setHasNextPage(meta.hasNextPage);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to load offers:', error);
-      setLoading(false);
-    }
-  }, []);
+  const offers = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const handleInfiniteScroll = useCallback(async () => {
-    if (loading || !hasNextPage) return;
-    setLoading(true);
-    setPage((prevPage) => prevPage + 1);
-    await load(page + 1);
-  }, [hasNextPage, load, loading, page]);
+  const handleInfiniteScroll = useCallback(() => {
+    if (isFetchingNextPage || !hasNextPage) return;
+    fetchNextPage();
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-  const refresh = useCallback(() => {
-    setPage(1);
-    load(1);
-  }, [load]);
-
-  useEffect(() => {
-    load(1);
-  }, [load]);
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']}>
       <List
         data={offers}
-        hasNextPage={hasNextPage}
+        hasNextPage={!!hasNextPage}
         keyExtractor={(offer) => offer.id}
         renderItem={({ item }: { item: OfferModel }) => <Offer offer={item} />}
         onEndReached={handleInfiniteScroll}
-        onRefresh={refresh}
-        isLoading={loading}
+        onRefresh={handleRefresh}
+        isLoading={isPending || isRefetching}
         loading={<LoadingSkeleton />}
         isEmpty={offers.length === 0}
         empty={<EmptyState title="Nenhum oferta assinada!" />}

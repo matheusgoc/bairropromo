@@ -1,6 +1,7 @@
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, Divider, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,50 +90,43 @@ const usePlaceStyles = () =>
   });
 
 const PlaceList: FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [places, setPlaces] = useState<PlaceModel[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [page, setPage] = useState(1);
+  const {
+    data,
+    isPending,
+    isRefetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['places'],
+    queryFn: ({ pageParam }) => PlaceService.list(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+  });
 
-  const load = useCallback(async (page: number) => {
-    setLoading(true);
-    try {
-      const { data, meta } = await PlaceService.list(page);
-      setPlaces((places) => (page === 1 ? data : [...places, ...data]));
-      setHasNextPage(meta.hasNextPage);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to load places:', error);
-      setLoading(false);
-    }
-  }, []);
+  const places = data?.pages.flatMap((page) => page.data) ?? [];
 
-  const handleInfiniteScroll = useCallback(async () => {
-    if (loading || !hasNextPage) return;
-    setLoading(true);
-    setPage((prevPage) => prevPage + 1);
-    await load(page + 1);
-  }, [hasNextPage, load, loading, page]);
+  const handleInfiniteScroll = useCallback(() => {
+    if (isFetchingNextPage || !hasNextPage) return;
+    fetchNextPage();
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-  const refresh = useCallback(() => {
-    setPage(1);
-    load(1);
-  }, [load]);
-
-  useEffect(() => {
-    load(1);
-  }, [load]);
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']}>
       <List
         data={places}
-        hasNextPage={hasNextPage}
+        hasNextPage={!!hasNextPage}
         keyExtractor={(place) => place.id}
         renderItem={({ item }: { item: PlaceModel }) => <Place place={item} />}
         onEndReached={handleInfiniteScroll}
-        onRefresh={refresh}
-        isLoading={loading}
+        onRefresh={handleRefresh}
+        isLoading={isPending || isRefetching}
         loading={<LoadingSkeleton />}
         isEmpty={places.length === 0}
         empty={

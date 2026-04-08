@@ -1,6 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo } from 'react';
 import { View } from 'react-native';
 import { Avatar, Button, Text, useTheme } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
@@ -9,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
-import OfferModel from '@/models/offer.model';
 import OfferService from '@/services/offer.service';
 
 const OfferCode: FC = () => {
@@ -17,28 +17,14 @@ const OfferCode: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
 
-  const [loading, setLoading] = useState<boolean>();
-  const [code, setCode] = useState<string>();
-  const [offer, setOffer] = useState<OfferModel>();
+  const { data, isPending } = useQuery({
+    queryKey: ['offer-code', id],
+    queryFn: () => OfferService.getCode(id),
+  });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { code, offer } = await OfferService.getCode(id);
-      setCode(code);
-      setOffer(offer);
-      setLoading(false);
-    } catch (error) {
-      console.error(`Failed to load offer #${id}`, error);
-      setLoading(false);
-    }
-  }, [id]);
+  const offer = data?.offer;
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  if (loading || !offer) {
+  if (isPending || !offer) {
     return <LoadingSkeleton />;
   }
 
@@ -90,8 +76,8 @@ const OfferCode: FC = () => {
       <Text variant="labelMedium">
         Mostre esse código para validar a promoção:
       </Text>
-      <QRCode value={code} />
-      <Text variant="headlineLarge">{code}</Text>
+      <QRCode value={data?.code} />
+      <Text variant="headlineLarge">{data?.code}</Text>
       {offer.location && (
         <Text
           variant="labelMedium"

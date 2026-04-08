@@ -1,12 +1,13 @@
-import { FC, memo, useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { FC, memo, useCallback } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
-import ProfileModel from '@/models/profile.model';
+import { useAuth } from '@/hooks/use-auth';
 import ProfileService from '@/services/profile.service';
 
 const SignedOutView: FC = () => (
@@ -129,44 +130,30 @@ const MyPlacesNotAppliedCard: FC = () => (
   </Card>
 );
 
-const IS_SIGNED_OUT = false; // @todo: implement auth context
-
 const ProfileView: FC = () => {
-  const [profile, setProfile] = useState<ProfileModel | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { isSignedIn } = useAuth();
 
-  const load = async () => {
-    setLoading(true);
-    if (IS_SIGNED_OUT) {
-      setLoading(false);
-      return;
-    }
+  const {
+    data: profile,
+    isPending,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: ['profile'],
+    queryFn: ProfileService.get,
+    enabled: isSignedIn,
+  });
 
-    try {
-      const data = await ProfileService.get();
-      setProfile(data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to load profile', error);
-      setLoading(false);
-    }
-  };
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
-  useEffect(() => {
-    load();
-  }, []);
+  if (!isSignedIn) return <SignedOutView />;
+  if (isPending || !profile) return <LoadingSkeleton />;
 
-  if (loading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (!profile) {
-    return <SignedOutView />;
-  }
-
-  const isOwner = ['owner', 'admin', 'master'].includes(profile?.role ?? '');
+  const isOwner = ['owner', 'admin', 'master'].includes(profile.role ?? '');
   const greeting =
-    profile?.gender === 'F' ? 'Seja bem-vinda,' : 'Seja bem-vindo,';
+    profile.gender === 'F' ? 'Seja bem-vinda,' : 'Seja bem-vindo,';
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 15 }}>
@@ -177,7 +164,11 @@ const ProfileView: FC = () => {
         <Avatar.Text size={80} label={extractInitials(profile.name)} />
         <Text variant="headlineMedium">{profile.name}</Text>
       </View>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />
+        }
+      >
         {profile.subscriptionStatus === 'success' && (
           <SubscriptionSuccessCard />
         )}

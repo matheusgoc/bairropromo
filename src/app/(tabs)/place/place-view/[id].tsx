@@ -1,6 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
-import { FC, Fragment, memo, useCallback, useEffect, useState } from 'react';
+import { FC, Fragment, memo, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Card, Divider, Icon, List, Switch, Text } from 'react-native-paper';
 
@@ -14,21 +15,17 @@ import PlaceService from '@/services/place.service';
 const PlaceView: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [loading, setLoading] = useState(true);
-  const [place, setPlace] = useState<PlaceModel>();
   const [signedPromos, setSignedPromos] = useState<string[]>([]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await PlaceService.get(id);
-      setPlace(data);
-      setLoading(false);
-    } catch (error) {
-      console.error(`Failed to load place #${id}`, error);
-      setLoading(false);
-    }
-  }, [id]);
+  const {
+    data: place,
+    isPending,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: ['place', id],
+    queryFn: () => PlaceService.get(id),
+  });
 
   const apply = useCallback(
     (id: string) => {
@@ -42,17 +39,19 @@ const PlaceView: FC = () => {
     [signedPromos],
   );
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const styles = useStyles();
 
-  return !place ? (
+  return isPending || !place ? (
     <LoadingSkeleton />
   ) : (
     <ScrollView
-      refreshControl={<RefreshControl onRefresh={load} refreshing={loading} />}
+      refreshControl={
+        <RefreshControl onRefresh={handleRefresh} refreshing={isRefetching} />
+      }
       contentContainerStyle={{ paddingBottom: 100 }}
     >
       <View style={styles.header}>
