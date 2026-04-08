@@ -4,6 +4,7 @@ import {
   DefaultTheme as NavigationDefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import {
@@ -13,6 +14,14 @@ import {
   PaperProvider,
 } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1 * 60 * 1000, // 1 minute
+    },
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -41,7 +50,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={navTheme}>
         <PaperProvider theme={paperTheme}>
-          <Slot />
+          <QueryClientProvider client={queryClient}>
+            <Slot />
+          </QueryClientProvider>
         </PaperProvider>
       </ThemeProvider>
     </SafeAreaProvider>
