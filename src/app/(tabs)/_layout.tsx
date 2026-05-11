@@ -24,7 +24,7 @@ const TabsLayout: FC = () => {
         }}
       />
       <Tabs.Screen
-        name="profile/profile-view"
+        name="profile"
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => (

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { FC, memo, useCallback } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
@@ -94,7 +95,11 @@ const SubscriptionNotAppliedCard: FC = () => (
   </Card>
 );
 
-const MyPlacesCard: FC = () => (
+interface PlaceCardProps {
+  onPress: () => void;
+}
+
+const MyPlacesCard: FC<PlaceCardProps> = ({ onPress }) => (
   <Card mode="contained" style={{ marginTop: 20 }}>
     <Card.Title title="Meus Locais" titleStyle={{ fontWeight: 'bold' }} />
     <Card.Content>
@@ -109,12 +114,14 @@ const MyPlacesCard: FC = () => (
       <Divider style={{ marginVertical: 10 }} />
     </Card.Content>
     <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
-      <Button mode="contained">Gerenciar Locais</Button>
+      <Button mode="contained" onPress={onPress}>
+        Gerenciar Locais
+      </Button>
     </Card.Actions>
   </Card>
 );
 
-const MyPlacesNotAppliedCard: FC = () => (
+const MyPlacesNotAppliedCard: FC<PlaceCardProps> = ({ onPress }) => (
   <Card mode="contained" style={{ marginTop: 20 }}>
     <Card.Title title="Meus Locais" titleStyle={{ fontWeight: 'bold' }} />
     <Card.Content>
@@ -125,7 +132,9 @@ const MyPlacesNotAppliedCard: FC = () => (
       <Text variant="bodyMedium">Faça parte da nossa comunidade!</Text>
     </Card.Content>
     <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
-      <Button mode="contained">Cadastrar Locais</Button>
+      <Button mode="contained" onPress={onPress}>
+        Cadastrar Locais
+      </Button>
     </Card.Actions>
   </Card>
 );
@@ -147,6 +156,15 @@ const ProfileView: FC = () => {
   const handleRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
+
+  const goToPlacePage = useCallback(() => {
+    if (!profile?.id) return;
+
+    router.navigate({
+      pathname: '/profile/place/place-list',
+      params: { profile: profile.id },
+    });
+  }, [profile?.id]);
 
   if (!isSignedIn) return <SignedOutView />;
   if (isPending || !profile) return <LoadingSkeleton />;
@@ -172,13 +190,17 @@ const ProfileView: FC = () => {
         {profile.subscriptionStatus === 'success' && (
           <SubscriptionSuccessCard />
         )}
-        {profile.subscriptionStatus === 'not_applied' && (
-          <SubscriptionNotAppliedCard />
-        )}
         {profile.subscriptionStatus === 'pending' && (
           <SubscriptionPendingCard />
         )}
-        {isOwner ? <MyPlacesCard /> : <MyPlacesNotAppliedCard />}
+        {profile.subscriptionStatus === 'not_applied' && (
+          <SubscriptionNotAppliedCard />
+        )}
+        {isOwner ? (
+          <MyPlacesCard onPress={goToPlacePage} />
+        ) : (
+          <MyPlacesNotAppliedCard onPress={goToPlacePage} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

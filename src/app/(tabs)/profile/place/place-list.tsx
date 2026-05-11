@@ -1,0 +1,163 @@
+import { useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
+import { router, useLocalSearchParams } from 'expo-router';
+import { FC, memo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Avatar, Badge, List as RNPList, useTheme } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import EmptyState from '@/components/ui/empty-state';
+import List from '@/components/ui/list';
+import PlaceStatusBadge from '@/components/ui/place-status-badge';
+import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
+import SkeletonText from '@/components/ui/skeleton/skeleton-text';
+import { extractInitials } from '@/helpers';
+import PlaceModel, { PlaceStatus } from '@/models/place.model';
+import PlaceService from '@/services/place.service';
+
+const PlaceList: FC = () => {
+  const { profile } = useLocalSearchParams<{ profile: string }>();
+
+  const {
+    data: places,
+    isPending,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: ['places', 'owner', profile],
+    queryFn: () => PlaceService.list(1, { ownerId: profile }),
+    enabled: !!profile,
+  });
+
+  if (!profile) {
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']}>
+        <EmptyState title="Erro" subtitle="Profile ID não fornecido" />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <View>
+      <List
+        data={places?.data ?? []}
+        hasNextPage={false}
+        keyExtractor={(place: PlaceModel) => place.id}
+        renderItem={({ item }: { item: PlaceModel }) => (
+          <PlaceItem place={item} profile={profile} />
+        )}
+        onRefresh={refetch}
+        isLoading={isPending || isRefetching}
+        loading={<LoadingSkeleton />}
+        isEmpty={(places?.data ?? []).length === 0}
+        empty={
+          <EmptyState
+            title="Nenhum local encontrado"
+            subtitle="Você não possui nenhum local cadastrado ainda."
+          />
+        }
+      />
+    </View>
+  );
+};
+
+interface PlaceItemProps {
+  place: PlaceModel;
+  profile: string;
+}
+
+const PlaceItem: FC<PlaceItemProps> = memo(({ place, profile }) => {
+  const theme = useTheme();
+  const styles = useStyles(theme);
+
+  const handlePress = () => {
+    router.navigate({
+      pathname: '/profile/place/[id]/place-view',
+      params: { id: place.id },
+    });
+  };
+
+  return (
+    <RNPList.Item
+      title={place.name}
+      titleNumberOfLines={1}
+      description={() => (
+        <View style={styles.description}>
+          <Text style={styles.category}>{place.category?.name}</Text>
+          <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+            {![PlaceStatus.ACTIVE, PlaceStatus.DRAFT].includes(
+              place.status,
+            ) && <PlaceStatusBadge status={place.status} />}
+          </View>
+        </View>
+      )}
+      onPress={handlePress}
+      left={() =>
+        place.logo ? (
+          <Image
+            source={place.logo}
+            style={styles.logo}
+            contentFit="cover"
+            alt={`Logo de ${place.name}`}
+          />
+        ) : (
+          <Avatar.Text size={50} label={extractInitials(place.name)} />
+        )
+      }
+      right={() => (
+        <View style={styles.right}>
+          <Badge
+            style={{ backgroundColor: place.published ? '#22C55E' : '#EF4444' }}
+          />
+          <RNPList.Icon icon="chevron-right" />
+        </View>
+      )}
+      style={styles.item}
+    />
+  );
+});
+
+PlaceItem.displayName = 'PlaceItem';
+
+const useStyles = (theme: any) =>
+  StyleSheet.create({
+    item: {
+      backgroundColor: theme.colors.surface,
+    },
+    logo: {
+      width: 50,
+      height: 50,
+      borderRadius: 50,
+      margin: 8,
+    },
+    right: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'center',
+    },
+    description: {
+      gap: 4,
+      alignItems: 'flex-start',
+    },
+    category: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+    },
+  });
+
+const LoadingSkeleton: FC = memo(() => (
+  <ScrollView>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <View key={i}>
+        <SkeletonText width="100%" height={200} />
+        <SkeletonCircle size={70} />
+        <SkeletonText width="60%" height={24} />
+        <SkeletonText width="40%" height={16} />
+      </View>
+    ))}
+  </ScrollView>
+));
+
+LoadingSkeleton.displayName = 'LoadingSkeleton';
+
+export default PlaceList;

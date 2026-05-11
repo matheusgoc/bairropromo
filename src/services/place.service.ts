@@ -1,6 +1,6 @@
 import ListModel from '@/models/list.model';
 import PlaceLocationModel from '@/models/place-location.model';
-import PlaceModel from '@/models/place.model';
+import PlaceModel, { PlaceStatus } from '@/models/place.model';
 
 const mockLoaction: PlaceLocationModel = {
   id: '1',
@@ -51,6 +51,9 @@ const mockPlace: PlaceModel = {
   photo: 'https://picsum.photos/200/300',
   logo: 'https://picsum.photos/200/300',
   website: 'https://mockplace.com.br',
+  status: PlaceStatus.ACTIVE,
+  reason: '',
+  published: true,
   locations: Array.from({ length: 3 }).map((_, i) => ({
     ...mockLoaction,
     id: i.toString(),
@@ -76,8 +79,21 @@ const mockPlace: PlaceModel = {
   ],
 };
 
+export interface PlaceServiceFilter {
+  ownerId?: string;
+  position?: {
+    lat: number;
+    lon: number;
+  };
+}
+
+const statuses = Object.values(PlaceStatus);
+
 const PlaceService = {
-  list: async (page: number): Promise<ListModel<PlaceModel>> => {
+  list: async (
+    page: number,
+    filter?: PlaceServiceFilter,
+  ): Promise<ListModel<PlaceModel>> => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     return {
@@ -85,6 +101,8 @@ const PlaceService = {
         ...mockPlace,
         id: `${page}-${i + 1}`,
         name: `Sample Place ${page}-${i + 1}`,
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        published: Math.random() > 0.5,
       })),
       meta: {
         page: page,
@@ -104,6 +122,8 @@ const PlaceService = {
       ...mockPlace,
       id,
       name: `Sample Place ${id}`,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      published: Math.random() > 0.5,
     };
   },
 
