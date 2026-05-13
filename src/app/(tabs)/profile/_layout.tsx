@@ -12,14 +12,38 @@ const ProfileLayout: FC = () => {
         name="place/place-list"
         options={{ title: 'Meus Locais' }}
       />
-      <Stack.Screen name="place/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="place/[id]/place-view" options={{ title: 'Local' }} />
       <Stack.Screen
-        name="place/[id]/place-view"
-        options={{ title: 'Visualizar Local' }}
+        name="place/[id]/place-form"
+        options={{ title: 'Editar Local' }}
       />
       <Stack.Screen
-        name="place/[id]/place-edit"
-        options={{ title: 'Editar Local' }}
+        name="place/[id]/place-owner"
+        options={{ title: 'Definir Dono' }}
+      />
+      <Stack.Screen
+        name="place/[id]/location/location-list"
+        options={{ title: 'Unidades' }}
+      />
+      <Stack.Screen
+        name="place/[id]/location/[locationId]/location-view"
+        options={{ title: 'Unidade' }}
+      />
+      <Stack.Screen
+        name="place/[id]/location/[locationId]/location-form"
+        options={{ title: 'Editar Location' }}
+      />
+      <Stack.Screen
+        name="place/[id]/offer/offer-list"
+        options={{ title: 'Ofertas' }}
+      />
+      <Stack.Screen
+        name="place/[id]/offer/[offerId]/offer-view"
+        options={{ title: 'Oferta' }}
+      />
+      <Stack.Screen
+        name="place/[id]/offer/[offerId]/offer-form"
+        options={{ title: 'Editar Oferta' }}
       />
     </Stack>
   );

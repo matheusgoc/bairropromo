@@ -3,15 +3,19 @@ import { FC } from 'react';
 import { View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-const PlaceEdit: FC = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+const OfferView: FC = () => {
+  const { id, locationId } = useLocalSearchParams<{
+    id: string;
+    locationId: string;
+  }>();
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Edit Place ID: {id}</Text>
-      {/* TODO: Implement place edit form */}
+      <Text>Place ID: {id}</Text>
+      <Text>Offer ID: {locationId}</Text>
+      {/* TODO: Implement offer view */}
     </View>
   );
 };
 
-export default PlaceEdit;
+export default OfferView;

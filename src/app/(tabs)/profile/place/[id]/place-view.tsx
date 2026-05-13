@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { FC, Fragment, memo, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import {
@@ -45,6 +45,38 @@ const PlaceView: FC = () => {
   const styles = useStyles();
   const { colors } = useTheme();
 
+  const editPlace = () => {
+    router.navigate({
+      pathname: '../[id]/place-form',
+      params: { id },
+    });
+  };
+
+  const editOwners = () => {
+    router.navigate({
+      pathname: '../[id]/place-owner',
+      params: { id },
+    });
+  };
+
+  const editLocations = () => {
+    router.navigate({
+      pathname: '../[id]/location/location-list',
+      params: { id },
+    });
+  };
+
+  const editOffers = () => {
+    router.navigate({
+      pathname: '../[id]/offer/offer-list',
+      params: { id },
+    });
+  };
+
+  const editLogo = () => {};
+
+  const editPhoto = () => {};
+
   return isPending || !place ? (
     <LoadingSkeleton />
   ) : (
@@ -69,7 +101,7 @@ const PlaceView: FC = () => {
                 icon="image-edit"
                 size={20}
                 mode="contained"
-                onPress={() => {}}
+                onPress={editLogo}
                 style={styles.logoBadge}
               />
             </View>
@@ -78,7 +110,7 @@ const PlaceView: FC = () => {
               icon="image-plus-outline"
               size={36}
               mode="contained"
-              onPress={() => {}}
+              onPress={editLogo}
               style={styles.logo}
             />
           )}
@@ -99,13 +131,13 @@ const PlaceView: FC = () => {
               icon="image-edit"
               size={30}
               mode="contained"
-              onPress={() => {}}
+              onPress={editPhoto}
               style={styles.photoBadge}
             />
           </View>
         ) : (
           <TouchableRipple
-            onPress={() => {}}
+            onPress={editPhoto}
             style={[
               styles.photoPlaceholder,
               { backgroundColor: colors.surfaceVariant },
@@ -124,7 +156,7 @@ const PlaceView: FC = () => {
               </View>
             ))
           ) : (
-            <OfferListEmptyState />
+            <OfferListEmptyState id={id} />
           )}
         </List.Section>
         <List.Section>
@@ -148,22 +180,22 @@ const PlaceView: FC = () => {
           {
             icon: 'store-edit-outline',
             label: 'Editar Local',
-            onPress: () => {},
+            onPress: editPlace,
           },
           {
             icon: 'map-marker-multiple-outline',
             label: 'Editar Unidades',
-            onPress: () => {},
+            onPress: editLocations,
           },
           {
             icon: 'tag-edit-outline',
             label: 'Editar Ofertas',
-            onPress: () => {},
+            onPress: editOffers,
           },
           {
             icon: 'account-group',
             label: 'Definir Dono',
-            onPress: () => {},
+            onPress: editOwners,
           },
         ]}
       />
@@ -190,17 +222,25 @@ const useStyles = () =>
     promoItem: {},
   });
 
-const OfferListEmptyState: FC<{ isLocation?: boolean }> = memo(
-  ({ isLocation }) => (
-    <View style={{ alignItems: 'center', gap: 12, paddingVertical: 20 }}>
-      <Text variant="bodyMedium">
-        Nenhuma oferta cadastrada{isLocation ? ' neste local' : ''}!
-      </Text>
-      <Button mode="contained" icon="tag-edit-outline" onPress={() => {}}>
-        Adicionar Oferta
-      </Button>
-    </View>
-  ),
+const OfferListEmptyState: FC<{ id: string; isLocation?: boolean }> = memo(
+  ({ id, isLocation }) => {
+    const addOffer = () => {
+      router.navigate({
+        pathname: '../[id]/offer/[offerId]/offer-form',
+        params: { id, offerId: 'new' },
+      });
+    };
+    return (
+      <View style={{ alignItems: 'center', gap: 12, paddingVertical: 20 }}>
+        <Text variant="bodyMedium">
+          Nenhuma oferta cadastrada{isLocation ? ' neste local' : ''}!
+        </Text>
+        <Button mode="contained" icon="tag-edit-outline" onPress={addOffer}>
+          Adicionar Oferta
+        </Button>
+      </View>
+    );
+  },
 );
 
 OfferListEmptyState.displayName = 'OfferListEmptyState';
