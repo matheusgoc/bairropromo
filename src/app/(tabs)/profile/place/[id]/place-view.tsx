@@ -334,7 +334,7 @@ const LoadingSkeleton: FC = memo(() => {
       </View>
       <SkeletonText width="100%" height={200} />
       <View style={{ margin: 20 }}>
-        <Text variant="bodyMedium">Promoções:</Text>
+        <Text variant="bodyMedium">Promoções</Text>
         {Array.from({ length: 3 }).map((_, i) => (
           <View key={i}>
             <View style={{ gap: 10, marginVertical: 20 }}>
@@ -345,6 +345,9 @@ const LoadingSkeleton: FC = memo(() => {
           </View>
         ))}
       </View>
+      <Text variant="bodyMedium" style={{ marginLeft: 20 }}>
+        Unidades
+      </Text>
       <Card style={{ margin: 10 }} mode="contained">
         <View style={{ margin: 20 }}>
           <View style={{ gap: 10 }}>

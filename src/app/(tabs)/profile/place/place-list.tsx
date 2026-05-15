@@ -3,7 +3,13 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FC, memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Badge, List as RNPList, useTheme } from 'react-native-paper';
+import {
+  Avatar,
+  Badge,
+  Divider,
+  List as RNPList,
+  useTheme,
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/ui/empty-state';
@@ -145,18 +151,34 @@ const useStyles = (theme: any) =>
     },
   });
 
-const LoadingSkeleton: FC = memo(() => (
-  <ScrollView>
-    {Array.from({ length: 5 }).map((_, i) => (
-      <View key={i}>
-        <SkeletonText width="100%" height={200} />
-        <SkeletonCircle size={70} />
-        <SkeletonText width="60%" height={24} />
-        <SkeletonText width="40%" height={16} />
-      </View>
-    ))}
-  </ScrollView>
-));
+const LoadingSkeleton: FC = memo(() => {
+  const theme = useTheme();
+  const styles = useStyles(theme);
+  return (
+    <ScrollView>
+      {Array.from({ length: 15 }).map((_, i) => (
+        <View key={i}>
+          <View style={{ flexDirection: 'row', gap: 10, margin: 10 }}>
+            <SkeletonCircle size={50} />
+            <View style={{ gap: 10, width: '70%', justifyContent: 'center' }}>
+              <SkeletonText width="60%" height={16} />
+              <SkeletonText width="100%" height={10} />
+            </View>
+            <View style={{ alignSelf: 'center' }}>
+              <View style={styles.right}>
+                <Badge
+                  style={{ backgroundColor: theme.colors.surfaceVariant }}
+                />
+                <RNPList.Icon icon="chevron-right" />
+              </View>
+            </View>
+          </View>
+          <Divider />
+        </View>
+      ))}
+    </ScrollView>
+  );
+});
 
 LoadingSkeleton.displayName = 'LoadingSkeleton';
 
