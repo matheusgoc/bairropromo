@@ -6,7 +6,6 @@ import { FC, memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Avatar,
-  Badge,
   Divider,
   Icon,
   List as RNPList,
@@ -17,39 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/ui/empty-state';
 import List from '@/components/ui/list';
+import OfferStatusBadge from '@/components/ui/offer-status-badge';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
 import OfferModel from '@/models/offer.model';
 import OfferService from '@/services/offer.service';
-
-const statusLabel: Record<OfferModel['status'], string> = {
-  canceled: 'promoção cancelada',
-  expired: 'promoção encerrada',
-  used: 'promoção utilizada',
-  active: 'ativa',
-};
-
-const StatusBadge = memo(({ status }: { status: OfferModel['status'] }) => {
-  const theme = useTheme();
-  return (
-    <Badge
-      style={{
-        fontSize: 12,
-        backgroundColor: theme.colors.outline,
-        alignSelf: 'flex-start',
-        marginHorizontal: 10,
-        marginBottom: 10,
-        marginLeft: 75,
-        paddingHorizontal: 20,
-      }}
-    >
-      {statusLabel[status]}
-    </Badge>
-  );
-});
-
-StatusBadge.displayName = 'StatusBadge';
 
 interface OfferProps {
   offer: Partial<OfferModel>;
@@ -113,7 +85,7 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
         </Text>
       )}
       {offer.status && offer.status !== 'active' ? (
-        <StatusBadge status={offer.status} />
+        <OfferStatusBadge status={offer.status} />
       ) : null}
       <Divider />
     </View>

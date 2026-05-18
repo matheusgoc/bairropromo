@@ -26,20 +26,12 @@ const ProfileLayout: FC = () => {
         options={{ title: 'Unidades' }}
       />
       <Stack.Screen
-        name="place/[id]/location/[locationId]/location-view"
-        options={{ title: 'Unidade' }}
-      />
-      <Stack.Screen
         name="place/[id]/location/[locationId]/location-form"
         options={{ title: 'Editar Location' }}
       />
       <Stack.Screen
         name="place/[id]/offer/offer-list"
         options={{ title: 'Ofertas' }}
-      />
-      <Stack.Screen
-        name="place/[id]/offer/[offerId]/offer-view"
-        options={{ title: 'Oferta' }}
       />
       <Stack.Screen
         name="place/[id]/offer/[offerId]/offer-form"

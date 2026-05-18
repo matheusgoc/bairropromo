@@ -2,8 +2,16 @@ import ListModel from '@/models/list.model';
 import OfferModel from '@/models/offer.model';
 
 const OfferService = {
-  list: async (page: number): Promise<ListModel<OfferModel>> => {
+  list: async (
+    page: number,
+    placeId?: string, // passed for profile offer list only
+  ): Promise<ListModel<OfferModel>> => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // profile offer list has no used status offer
+    const status = placeId
+      ? ['expired', 'canceled'][Math.floor(Math.random() * 2)]
+      : ['used', 'expired', 'canceled'][Math.floor(Math.random() * 3)];
 
     return {
       data: Array.from({ length: 20 }, (_, i) => ({
@@ -13,15 +21,10 @@ const OfferService = {
         discount: 10 + i,
         start: new Date().toISOString(),
         end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status:
-          page > 1
-            ? (['used', 'expired', 'canceled'][
-                Math.floor(Math.random() * 3)
-              ] as OfferModel['status'])
-            : 'active',
+        status: page > 1 ? (status as OfferModel['status']) : 'active',
         place: {
-          id: (i + 1).toString(),
-          name: `Place ${i + 1}`,
+          id: placeId ?? (i + 1).toString(),
+          name: placeId ? `Place ${placeId}` : `Place ${i + 1}`,
           logo: ['https://picsum.photos/200/300', undefined, 'expired'][
             Math.floor(Math.random() * 2)
           ],
