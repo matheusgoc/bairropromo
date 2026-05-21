@@ -1,3 +1,3 @@
-import { MD3Theme } from 'react-native-paper';
+import { DARK_THEME, LIGHT_THEME } from '@/theme';
 
-export type DefaultTheme = MD3Theme;
+export type DefaultTheme = typeof DARK_THEME | typeof LIGHT_THEME;

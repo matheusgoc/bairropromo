@@ -1,4 +1,3 @@
-import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationDefaultTheme,
@@ -7,13 +6,11 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import {
-  adaptNavigationTheme,
-  MD3DarkTheme,
-  MD3LightTheme,
-  PaperProvider,
-} from 'react-native-paper';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { adaptNavigationTheme, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { DARK_THEME, LIGHT_THEME } from '@/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,15 +22,11 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { theme } = useMaterial3Theme();
 
-  // paper theme using material3 colors
-  const paperTheme =
-    colorScheme === 'dark'
-      ? { ...MD3DarkTheme, colors: theme.dark }
-      : { ...MD3LightTheme, colors: theme.light };
+  // paper theme
+  const paperTheme = colorScheme === 'dark' ? DARK_THEME : LIGHT_THEME;
 
-  // nav theme adaptation based on material3 colors
+  // nav theme adaptation
   const { LightTheme, DarkTheme } = adaptNavigationTheme({
     reactNavigationLight: NavigationDefaultTheme,
     reactNavigationDark: NavigationDarkTheme,
@@ -51,7 +44,9 @@ export default function RootLayout() {
       <ThemeProvider value={navTheme}>
         <PaperProvider theme={paperTheme}>
           <QueryClientProvider client={queryClient}>
-            <Slot />
+            <KeyboardProvider>
+              <Slot />
+            </KeyboardProvider>
           </QueryClientProvider>
         </PaperProvider>
       </ThemeProvider>
