@@ -3,13 +3,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FC, memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import {
-  Avatar,
-  Badge,
-  Divider,
-  List as RNPList,
-  useTheme,
-} from 'react-native-paper';
+import { Avatar, Badge, Divider, List as RNPList } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/ui/empty-state';
@@ -18,8 +12,10 @@ import PlaceStatusBadge from '@/components/ui/place-status-badge';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
+import useAppTheme from '@/hooks/use-app-theme';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
 import PlaceService from '@/services/place.service';
+import { DefaultTheme } from '@/types';
 
 const PlaceList: FC = () => {
   const { profile } = useLocalSearchParams<{ profile: string }>();
@@ -73,7 +69,7 @@ interface PlaceItemProps {
 }
 
 const PlaceItem: FC<PlaceItemProps> = memo(({ place, profile }) => {
-  const theme = useTheme();
+  const theme = useAppTheme();
   const styles = useStyles(theme);
 
   const handlePress = () => {
@@ -113,7 +109,11 @@ const PlaceItem: FC<PlaceItemProps> = memo(({ place, profile }) => {
       right={() => (
         <View style={styles.right}>
           <Badge
-            style={{ backgroundColor: place.published ? '#22C55E' : '#EF4444' }}
+            style={{
+              backgroundColor: place.published
+                ? theme.colors.success
+                : theme.colors.error,
+            }}
           />
           <RNPList.Icon icon="chevron-right" />
         </View>
@@ -125,7 +125,7 @@ const PlaceItem: FC<PlaceItemProps> = memo(({ place, profile }) => {
 
 PlaceItem.displayName = 'PlaceItem';
 
-const useStyles = (theme: any) =>
+const useStyles = (theme: DefaultTheme) =>
   StyleSheet.create({
     item: {
       backgroundColor: theme.colors.surface,
@@ -152,7 +152,7 @@ const useStyles = (theme: any) =>
   });
 
 const LoadingSkeleton: FC = memo(() => {
-  const theme = useTheme();
+  const theme = useAppTheme();
   const styles = useStyles(theme);
   return (
     <ScrollView>
