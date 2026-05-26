@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import * as Burnt from 'burnt';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { FC, Fragment, memo, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import {
+  ActivityIndicator,
   Button,
   Card,
+  Chip,
   Divider,
   FAB,
   Icon,
@@ -13,20 +16,30 @@ import {
   List,
   Text,
   TouchableRipple,
-  useTheme,
 } from 'react-native-paper';
 
+import Dialog from '@/components/ui/dialog';
+import PlaceStatusBadge from '@/components/ui/place-status-badge';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
+import useAppTheme from '@/hooks/use-app-theme';
+import usePlaceImageUpload from '@/hooks/use-place-image-upload';
 import OfferModel from '@/models/offer.model';
 import PlaceLocationModel from '@/models/place-location.model';
-import PlaceModel from '@/models/place.model';
+import PlaceModel, { PlaceStatus } from '@/models/place.model';
 import PlaceService from '@/services/place.service';
+import ToastService from '@/services/toast.service';
+import { DefaultTheme } from '@/types';
 
 const PlaceView: FC = () => {
+  const { colors } = useAppTheme();
+  const styles = useStyles(colors);
+
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [fabOpen, setFabOpen] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+  const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
 
   const {
     data: place,
@@ -38,12 +51,73 @@ const PlaceView: FC = () => {
     queryFn: () => PlaceService.get(id),
   });
 
+  const handleUploadError = useCallback((e: Error) => {
+    if (e.message === 'permission_denied') {
+      ToastService.error('Permissão negada!', 'Habilite nas configurações.');
+    } else {
+      ToastService.error('Erro ao enviar imagem!', 'Tente novamente.');
+    }
+  }, []);
+
+  const {
+    pendingUri: pendingLogo,
+    isUploading: isUploadingLogo,
+    pick: pickLogo,
+  } = usePlaceImageUpload({
+    placeId: id,
+    type: 'logo',
+    onError: handleUploadError,
+    onSuccess: () => {
+      ToastService.success('Logo atualizada!');
+    },
+  });
+
+  const {
+    pendingUri: pendingPhoto,
+    isUploading: isUploadingPhoto,
+    pick: pickPhoto,
+  } = usePlaceImageUpload({
+    placeId: id,
+    type: 'photo',
+    onError: handleUploadError,
+    onSuccess: () => {
+      ToastService.success('Foto atualizada!');
+    },
+  });
+
   const handleRefresh = useCallback(async () => {
     await refetch();
   }, [refetch]);
 
-  const styles = useStyles();
-  const { colors } = useTheme();
+  const togglePublished = useCallback(async () => {
+    if (!place) return;
+    setIsToggling(true);
+    try {
+      if (place.published) {
+        await PlaceService.unpublish(id);
+        Burnt.toast({ title: 'Publicação do local desativada!' });
+      } else {
+        await PlaceService.publish(id);
+        Burnt.toast({ title: 'Local publicado!' });
+      }
+      await refetch();
+      setIsToggling(false);
+    } catch (e) {
+      ToastService.error('Erro ao atualizar publicação!');
+      setIsToggling(false);
+      console.error(e);
+    }
+  }, [place, refetch, id]);
+
+  const handleTogglePublished = useCallback(() => {
+    setConfirmDialogVisible(true);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const editPlace = () => {
     router.navigate({
@@ -73,9 +147,9 @@ const PlaceView: FC = () => {
     });
   };
 
-  const editLogo = () => {};
+  const editLogo = pickLogo;
 
-  const editPhoto = () => {};
+  const editPhoto = pickPhoto;
 
   return isPending || !place ? (
     <LoadingSkeleton />
@@ -88,19 +162,25 @@ const PlaceView: FC = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.header}>
-          {place.logo ? (
+          {place.logo || pendingLogo ? (
             <View style={styles.logoContainer}>
               <Image
-                source={place.logo}
+                source={pendingLogo ?? place.logo}
                 contentFit="cover"
                 transition={1000}
                 alt={`Logo de ${place.name}.`}
                 style={styles.logo}
               />
+              {isUploadingLogo && (
+                <View style={styles.uploadOverlayRound}>
+                  <ActivityIndicator color="white" />
+                </View>
+              )}
               <IconButton
                 icon="image-edit"
                 size={20}
                 mode="contained"
+                disabled={isUploadingLogo}
                 onPress={editLogo}
                 style={styles.logoBadge}
               />
@@ -110,6 +190,7 @@ const PlaceView: FC = () => {
               icon="image-plus-outline"
               size={36}
               mode="contained"
+              disabled={isUploadingLogo}
               onPress={editLogo}
               style={styles.logo}
             />
@@ -118,19 +199,25 @@ const PlaceView: FC = () => {
             {place.name}
           </Text>
         </View>
-        {place.photo ? (
+        {place.photo || pendingPhoto ? (
           <View>
             <Image
-              source={place.photo}
+              source={pendingPhoto ?? place.photo}
               contentFit="cover"
               transition={1000}
               alt={`Foto de ${place.name}.`}
               style={{ height: 200 }}
             />
+            {isUploadingPhoto && (
+              <View style={styles.uploadOverlay}>
+                <ActivityIndicator color="white" size="large" />
+              </View>
+            )}
             <IconButton
               icon="image-edit"
               size={30}
               mode="contained"
+              disabled={isUploadingPhoto}
               onPress={editPhoto}
               style={styles.photoBadge}
             />
@@ -138,6 +225,7 @@ const PlaceView: FC = () => {
         ) : (
           <TouchableRipple
             onPress={editPhoto}
+            disabled={isUploadingPhoto}
             style={[
               styles.photoPlaceholder,
               { backgroundColor: colors.surfaceVariant },
@@ -145,6 +233,35 @@ const PlaceView: FC = () => {
           >
             <IconButton icon="image-plus-outline" size={48} mode="contained" />
           </TouchableRipple>
+        )}
+        <View style={styles.statusContainer}>
+          {![PlaceStatus.ACTIVE, PlaceStatus.DRAFT].includes(place.status) && (
+            <PlaceStatusBadge status={place.status} />
+          )}
+          <Chip
+            icon={place.published ? 'store-check-outline' : 'store-off-outline'}
+            onPress={handleTogglePublished}
+            disabled={isToggling || isRefetching}
+            mode="outlined"
+            style={{
+              borderColor: place.published ? colors.success : colors.error,
+            }}
+            selectedColor={place.published ? colors.success : colors.error}
+          >
+            {place.published ? 'Publicado' : 'Não Publicado'}
+          </Chip>
+        </View>
+        {place.reason && (
+          <Card mode="contained" style={styles.reasonContainer}>
+            <Card.Content>
+              <Text
+                variant="bodyMedium"
+                style={{ color: colors.onWarningContainer }}
+              >
+                {place.reason}
+              </Text>
+            </Card.Content>
+          </Card>
         )}
         <List.Section>
           <List.Subheader>Promoções</List.Subheader>
@@ -170,6 +287,17 @@ const PlaceView: FC = () => {
             {place.description}
           </Text>
         )}
+        <Button
+          mode="contained"
+          loading={isToggling || isRefetching}
+          disabled={isToggling || isRefetching}
+          onPress={handleTogglePublished}
+          buttonColor={colors.error}
+          icon={place.published ? 'store-off-outline' : 'store-check-outline'}
+          style={{ margin: 20 }}
+        >
+          {place.published ? 'Desativar Publicação' : 'Publicar'}
+        </Button>
       </ScrollView>
       <FAB.Group
         open={fabOpen}
@@ -199,11 +327,36 @@ const PlaceView: FC = () => {
           },
         ]}
       />
+      <Dialog
+        visible={confirmDialogVisible}
+        onDismiss={() => setConfirmDialogVisible(false)}
+        title={place.published ? 'Desativar Publicação' : 'Publicar'}
+        mode="danger"
+        message={
+          place.published
+            ? `Tem certeza que deseja desativar a publicação do local ${place.name}?`
+            : `Tem certeza que deseja publicar o local ${place.name}?`
+        }
+        actions={[
+          {
+            label: 'Não',
+            callback: () => setConfirmDialogVisible(false),
+          },
+          {
+            label: 'Sim',
+            isPrimary: true,
+            callback: () => {
+              setConfirmDialogVisible(false);
+              togglePublished();
+            },
+          },
+        ]}
+      />
     </View>
   );
 };
 
-const useStyles = () =>
+const useStyles = (colors?: DefaultTheme['colors']) =>
   StyleSheet.create({
     header: { alignItems: 'center', margin: 20 },
     logo: { width: 100, height: 100, borderRadius: 50 },
@@ -215,11 +368,32 @@ const useStyles = () =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    promoItemContainer: {
-      marginLeft: 20,
-      marginRight: 5,
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
     },
-    promoItem: {},
+    reasonContainer: {
+      marginHorizontal: 16,
+      marginBottom: 8,
+      backgroundColor: colors?.warningContainer,
+    },
+    uploadOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    uploadOverlayRound: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 50,
+    },
   });
 
 const OfferListEmptyState: FC<{ id: string; isLocation?: boolean }> = memo(

@@ -79,6 +79,15 @@ const mockPlace: PlaceModel = {
   ],
 };
 
+export interface PlacePayload {
+  name: string;
+  description?: string;
+  website?: string;
+  category?: string;
+}
+
+export type PlaceImageType = 'logo' | 'photo';
+
 export interface PlaceServiceFilter {
   ownerId?: string;
   position?: {
@@ -127,20 +136,39 @@ const PlaceService = {
     };
   },
 
-  add: async (placeData: any) => {
-    // Logic to create a new place
+  add: async (data: PlacePayload) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  update: async (id: string, placeData: any) => {
-    // Logic to update an existing place
+  update: async (id: string, data: PlacePayload) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  enable: async (id: string) => {
-    // Logic to enable a place by its ID
+  publish: async (id: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  disable: async (id: string) => {
-    // Logic to disable a place by its ID
+  unpublish: async (id: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  },
+
+  uploadImage: async (
+    placeId: string,
+    _imageUri: string,
+    type: PlaceImageType,
+  ): Promise<string> => {
+    // Mock: simulate upload latency
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Mock: return a stable fake CDN URL.
+    // ── Real API swap: replace this entire body with: ──────────────────────
+    // const formData = new FormData();
+    // formData.append('file', { uri: _imageUri, type: 'image/jpeg', name: `${type}.jpg` } as any);
+    // const res = await fetch(`/api/places/${placeId}/images/${type}`, { method: 'POST', body: formData });
+    // const json = await res.json();
+    // return json.url;
+    // ───────────────────────────────────────────────────────────────────────
+    return `https://picsum.photos/seed/${placeId}-${type}-${Date.now()}/400/400`;
   },
 };
 
