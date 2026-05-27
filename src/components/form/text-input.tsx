@@ -7,6 +7,7 @@ import {
 import { StyleSheet, View } from 'react-native';
 import type { TextInputProps } from 'react-native-paper';
 import { HelperText, TextInput as PaperTextInput } from 'react-native-paper';
+import MaskInput, { Mask } from 'react-native-mask-input';
 
 type Props<
   TFieldValues extends FieldValues,
@@ -15,6 +16,7 @@ type Props<
   name: TName;
   control: ControllerProps<TFieldValues, TName>['control'];
   rules?: ControllerProps<TFieldValues, TName>['rules'];
+  mask?: Mask;
 };
 
 const TextInput = <
@@ -24,6 +26,7 @@ const TextInput = <
   name,
   control,
   rules,
+  mask,
   ...props
 }: Props<TFieldValues, TName>) => (
   <Controller
@@ -39,6 +42,17 @@ const TextInput = <
           onChangeText={onChange}
           onBlur={onBlur}
           error={!!error}
+          render={
+            mask
+              ? (renderProps) => (
+                  <MaskInput
+                    {...renderProps}
+                    mask={mask}
+                    onChangeText={(_masked, unmasked) => onChange(unmasked)}
+                  />
+                )
+              : undefined
+          }
         />
         <HelperText type="error" visible={!!error} style={styles.error}>
           {error?.message}

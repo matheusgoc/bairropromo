@@ -101,3 +101,5 @@ export const BRAZIL_STATES = [
   { id: 'SE', name: 'SE - Sergipe' },
   { id: 'TO', name: 'TO - Tocantins' },
 ];
+
+export const CEP_MASK = [/\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/];

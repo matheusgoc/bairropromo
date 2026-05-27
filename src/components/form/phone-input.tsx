@@ -6,15 +6,11 @@ import {
   RegisterOptions,
 } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { Masks } from 'react-native-mask-input';
 import type { TextInputProps } from 'react-native-paper';
-import {
-  HelperText,
-  TextInput as PaperTextInput,
-  Switch as RNPSwitch,
-  Text,
-} from 'react-native-paper';
+import { Switch as RNPSwitch, Text } from 'react-native-paper';
 
-const PHONE_PATTERN = /^(?!.* {2})[\d\-. ()]+$/;
+import TextInput from '@/components/form/text-input';
 
 type PhoneInputProps<
   TFieldValues extends FieldValues,
@@ -43,40 +39,19 @@ const PhoneInput = <
 }: PhoneInputProps<TFieldValues, TName, TWhatsappName>) => (
   <View>
     <View style={styles.row}>
-      <Controller
-        name={name}
-        control={control}
-        rules={{
-          pattern: {
-            value: PHONE_PATTERN,
-            message: 'Número de telefone inválido',
-          },
-          ...rules,
-        }}
-        render={({
-          field: { onChange, onBlur, value },
-          fieldState: { error },
-        }) => (
-          <View style={styles.inputWrapper}>
-            <PaperTextInput
-              mode="outlined"
-              keyboardType="phone-pad"
-              {...props}
-              value={value ?? ''}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={!!error}
-            />
-            <HelperText
-              type="error"
-              visible={!!error}
-              style={styles.helperText}
-            >
-              {error?.message}
-            </HelperText>
-          </View>
-        )}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          keyboardType="phone-pad"
+          {...props}
+          name={name}
+          control={control}
+          rules={{
+            minLength: { value: 10, message: 'Número de telefone inválido' },
+            ...rules,
+          }}
+          mask={Masks.BRL_PHONE}
+        />
+      </View>
       <Controller
         name={whatsappName}
         control={control}
@@ -104,9 +79,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingTop: 10,
-  },
-  helperText: {
-    marginTop: -4,
   },
 });
 

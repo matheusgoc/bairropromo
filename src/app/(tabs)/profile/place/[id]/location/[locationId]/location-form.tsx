@@ -10,7 +10,7 @@ import PhoneInput from '@/components/form/phone-input';
 import SelectInput from '@/components/form/select-input';
 import Switch from '@/components/form/switch';
 import TextInput from '@/components/form/text-input';
-import { BRAZIL_STATES } from '@/constants';
+import { BRAZIL_STATES, CEP_MASK } from '@/constants';
 import useAppTheme from '@/hooks/use-app-theme';
 import LocationService, { LocationPayload } from '@/services/location.service';
 import ToastService from '@/services/toast.service';
@@ -280,6 +280,7 @@ const LocationForm: FC = () => {
             message: 'CEP inválido (ex: 01310-100)',
           },
         }}
+        mask={CEP_MASK}
         label="CEP"
         keyboardType="number-pad"
         style={styles.input}
