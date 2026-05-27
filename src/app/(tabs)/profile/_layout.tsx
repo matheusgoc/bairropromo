@@ -1,7 +1,11 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { FC } from 'react';
+import { Pressable } from 'react-native';
+import { Icon } from 'react-native-paper';
 
 const ProfileLayout: FC = () => {
+  const router = useRouter();
+
   return (
     <Stack>
       <Stack.Screen
@@ -10,7 +14,27 @@ const ProfileLayout: FC = () => {
       />
       <Stack.Screen
         name="place/place-list"
-        options={{ title: 'Meus Locais' }}
+        options={{
+          title: 'Meus Locais',
+          headerRight: () => (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/profile/place/[id]/place-form',
+                  params: {
+                    id: 'new',
+                  },
+                })
+              }
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+                padding: 6,
+              })}
+            >
+              <Icon source="plus" size={24} />
+            </Pressable>
+          ),
+        }}
       />
       <Stack.Screen name="place/[id]/place-view" options={{ title: 'Local' }} />
       <Stack.Screen
@@ -23,15 +47,59 @@ const ProfileLayout: FC = () => {
       />
       <Stack.Screen
         name="place/[id]/location/location-list"
-        options={{ title: 'Unidades' }}
+        options={({ route }) => ({
+          title: 'Unidades',
+          headerRight: () => (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname:
+                    '/(tabs)/profile/place/[id]/location/[locationId]/location-form',
+                  params: {
+                    id: (route.params as { id?: string })?.id ?? '',
+                    locationId: 'new',
+                  },
+                })
+              }
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+                padding: 6,
+              })}
+            >
+              <Icon source="plus" size={24} />
+            </Pressable>
+          ),
+        })}
       />
       <Stack.Screen
         name="place/[id]/location/[locationId]/location-form"
-        options={{ title: 'Editar Location' }}
+        options={{ title: 'Editar Unidade' }}
       />
       <Stack.Screen
         name="place/[id]/offer/offer-list"
-        options={{ title: 'Ofertas' }}
+        options={({ route }) => ({
+          title: 'Ofertas',
+          headerRight: () => (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname:
+                    '/(tabs)/profile/place/[id]/offer/[offerId]/offer-form',
+                  params: {
+                    id: (route.params as { id?: string })?.id ?? '',
+                    offerId: 'new',
+                  },
+                })
+              }
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.5 : 1,
+                padding: 6,
+              })}
+            >
+              <Icon source="plus" size={24} />
+            </Pressable>
+          ),
+        })}
       />
       <Stack.Screen
         name="place/[id]/offer/[offerId]/offer-form"

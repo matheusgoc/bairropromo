@@ -1,6 +1,18 @@
 import ListModel from '@/models/list.model';
 import PlaceLocationModel from '@/models/place-location.model';
 
+export interface LocationPayload {
+  name: string;
+  city: string;
+  state: string;
+  address: string;
+  postalCode: string;
+  phone?: string;
+  isWhatsapp?: boolean;
+  email?: string;
+  workingHours: { weekDay: string; start: string; end: string }[];
+}
+
 const mockCities: { city: string; state: string }[] = [
   { city: 'São José do Vale do Rio Preto', state: 'MG' },
   { city: 'Belo Horizonte', state: 'MG' },
@@ -64,13 +76,13 @@ const LocationService = {
   },
 
   get: async (
-    _placeId: string,
-    _locationId: string,
+    placeId: string,
+    locationId: string,
   ): Promise<PlaceLocationModel> => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     return {
-      id: _locationId,
+      id: locationId,
       name: 'Centro',
       city: 'São José do Vale do Rio Preto',
       state: 'MG',
@@ -88,19 +100,19 @@ const LocationService = {
     };
   },
 
-  add: async (_placeId: string, _location: Partial<PlaceLocationModel>) => {
+  add: async (placeId: string, location: LocationPayload): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
   update: async (
-    _placeId: string,
-    _locationId: string,
-    _location: Partial<PlaceLocationModel>,
-  ) => {
+    placeId: string,
+    locationId: string,
+    location: LocationPayload,
+  ): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  remove: async (_placeId: string, _locationId: string) => {
+  remove: async (placeId: string, locationId: string) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 };
