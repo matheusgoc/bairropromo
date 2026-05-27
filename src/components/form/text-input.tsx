@@ -5,27 +5,27 @@ import {
   FieldValues,
 } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import type { TextInputProps as PaperTextInputProps } from 'react-native-paper';
+import type { TextInputProps } from 'react-native-paper';
 import { HelperText, TextInput as PaperTextInput } from 'react-native-paper';
 
-type TextInputProps<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> = Omit<PaperTextInputProps, 'value' | 'onChangeText' | 'onBlur'> & {
+type Props<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> = Omit<TextInputProps, 'value' | 'onChangeText' | 'onBlur'> & {
   name: TName;
   control: ControllerProps<TFieldValues, TName>['control'];
   rules?: ControllerProps<TFieldValues, TName>['rules'];
 };
 
 const TextInput = <
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
 >({
   name,
   control,
   rules,
-  ...textInputProps
-}: TextInputProps<TFieldValues, TName>) => (
+  ...props
+}: Props<TFieldValues, TName>) => (
   <Controller
     name={name}
     control={control}
@@ -34,7 +34,7 @@ const TextInput = <
       <View>
         <PaperTextInput
           mode="outlined"
-          {...textInputProps}
+          {...props}
           value={value ?? ''}
           onChangeText={onChange}
           onBlur={onBlur}
@@ -54,5 +54,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export type { TextInputProps };
 export default TextInput;
