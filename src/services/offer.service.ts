@@ -1,6 +1,13 @@
 import ListModel from '@/models/list.model';
 import OfferModel from '@/models/offer.model';
 
+export interface OfferPayload {
+  title: string;
+  start?: string;
+  end?: string;
+  locationId?: string;
+}
+
 const OfferService = {
   list: async (
     page: number,
@@ -95,20 +102,36 @@ const OfferService = {
     // Logic to unassign an offer from a user
   },
 
-  add: async (offer: Partial<OfferModel>) => {
-    // Logic to create a new offer
+  get: async (placeId: string, offerId: string): Promise<OfferModel> => {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    return {
+      id: offerId,
+      title: 'Oferta de exemplo',
+      start: new Date().toISOString(),
+      end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+    };
   },
 
-  update: async (id: string, offer: Partial<OfferModel>) => {
-    // Logic to update an existing offer
+  add: async (placeId: string, data: OfferPayload): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  disable: async (id: string) => {
-    // Logic to disable an offer
+  update: async (
+    placeId: string,
+    offerId: string,
+    data: OfferPayload,
+  ): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  enable: async (id: string) => {
-    // Logic to enable an offer
+  disable: async (placeId: string, offerId: string): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  },
+
+  enable: async (placeId: string, offerId: string): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 };
 

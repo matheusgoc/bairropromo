@@ -102,4 +102,21 @@ export const BRAZIL_STATES = [
   { id: 'TO', name: 'TO - Tocantins' },
 ];
 
-export const CEP_MASK = [/\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/];
+export const DATETIME_MASK = [
+  /\d/,
+  /\d/,
+  '/',
+  /\d/,
+  /\d/,
+  '/',
+  /\d/,
+  /\d/,
+  /\d/,
+  /\d/,
+  ' ',
+  /\d/,
+  /\d/,
+  ':',
+  /\d/,
+  /\d/,
+];

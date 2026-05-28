@@ -4,14 +4,15 @@ import { FC, useEffect, useState } from 'react';
 import { Control, FieldPath, useForm, useWatch } from 'react-hook-form';
 import { StyleProp, StyleSheet, TextStyle, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Masks } from 'react-native-mask-input';
 import { ActivityIndicator, Button, Divider, Text } from 'react-native-paper';
 
-import Dialog from '@/components/ui/dialog';
 import PhoneInput from '@/components/form/phone-input';
 import SelectInput from '@/components/form/select-input';
 import Switch from '@/components/form/switch';
 import TextInput from '@/components/form/text-input';
-import { BRAZIL_STATES, CEP_MASK } from '@/constants';
+import Dialog from '@/components/ui/dialog';
+import { BRAZIL_STATES } from '@/constants';
 import useAppTheme from '@/hooks/use-app-theme';
 import LocationService, { LocationPayload } from '@/services/location.service';
 import ToastService from '@/services/toast.service';
@@ -292,7 +293,7 @@ const LocationForm: FC = () => {
             message: 'CEP inválido (ex: 01310-100)',
           },
         }}
-        mask={CEP_MASK}
+        mask={Masks.ZIP_CODE}
         label="CEP"
         keyboardType="number-pad"
         style={styles.input}
