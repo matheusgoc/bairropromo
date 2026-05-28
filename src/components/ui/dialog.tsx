@@ -1,6 +1,11 @@
 import { ComponentProps, FC, ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import { Button, Dialog as PaperDialog, Text } from 'react-native-paper';
+import {
+  Button,
+  Dialog as PaperDialog,
+  Portal,
+  Text,
+} from 'react-native-paper';
 
 import useAppTheme from '@/hooks/use-app-theme';
 
@@ -78,35 +83,37 @@ const Dialog: FC<Props> = ({
   const styles = useStyles(colors);
 
   return (
-    <PaperDialog style={styles.dialog} {...props}>
-      <PaperDialog.Title style={styles.title}>{title}</PaperDialog.Title>
-      <PaperDialog.Content>
-        {typeof message === 'string' ? (
-          <Text variant="bodyLarge" style={styles.message}>
-            {message}
-          </Text>
-        ) : (
-          message
-        )}
-      </PaperDialog.Content>
+    <Portal>
+      <PaperDialog style={styles.dialog} {...props}>
+        <PaperDialog.Title style={styles.title}>{title}</PaperDialog.Title>
+        <PaperDialog.Content>
+          {typeof message === 'string' ? (
+            <Text variant="bodyLarge" style={styles.message}>
+              {message}
+            </Text>
+          ) : (
+            message
+          )}
+        </PaperDialog.Content>
 
-      {actions.length > 0 && (
-        <PaperDialog.Actions style={{ justifyContent: 'space-between' }}>
-          {actions.map(({ label, isPrimary, callback }, index) => {
-            return (
-              <Button
-                key={index}
-                onPress={callback}
-                mode="contained"
-                buttonColor={isPrimary ? colors.accent : undefined}
-              >
-                {label}
-              </Button>
-            );
-          })}
-        </PaperDialog.Actions>
-      )}
-    </PaperDialog>
+        {actions.length > 0 && (
+          <PaperDialog.Actions style={{ justifyContent: 'space-between' }}>
+            {actions.map(({ label, isPrimary, callback }, index) => {
+              return (
+                <Button
+                  key={index}
+                  onPress={callback}
+                  mode="contained"
+                  buttonColor={isPrimary ? colors.accent : undefined}
+                >
+                  {label}
+                </Button>
+              );
+            })}
+          </PaperDialog.Actions>
+        )}
+      </PaperDialog>
+    </Portal>
   );
 };
 

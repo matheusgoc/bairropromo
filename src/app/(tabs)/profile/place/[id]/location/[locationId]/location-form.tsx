@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Control, FieldPath, useForm, useWatch } from 'react-hook-form';
 import { StyleProp, StyleSheet, TextStyle, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { ActivityIndicator, Button, Divider, Text } from 'react-native-paper';
 
+import Dialog from '@/components/ui/dialog';
 import PhoneInput from '@/components/form/phone-input';
 import SelectInput from '@/components/form/select-input';
 import Switch from '@/components/form/switch';
@@ -207,6 +208,17 @@ const LocationForm: FC = () => {
     },
   });
 
+  const [removeDialogVisible, setRemoveDialogVisible] = useState(false);
+
+  const { mutate: removeLocation, isPending: isRemoving } = useMutation({
+    mutationFn: () => LocationService.remove(id, locationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations', id] });
+      ToastService.success('Unidade removida!');
+      router.back();
+    },
+  });
+
   if (!isNew && isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -329,15 +341,50 @@ const LocationForm: FC = () => {
         ))}
       </View>
 
-      <Button
-        mode="contained"
-        onPress={onSubmit}
-        loading={isPending}
-        disabled={isPending}
-        style={styles.button}
-      >
-        Salvar
-      </Button>
+      <View style={styles.buttonsContainer}>
+        {!isNew && (
+          <Button
+            mode="contained"
+            onPress={() => setRemoveDialogVisible(true)}
+            disabled={isPending || isRemoving}
+            buttonColor="#B00020"
+            style={styles.button}
+          >
+            Remover
+          </Button>
+        )}
+        <Button
+          mode="contained"
+          onPress={onSubmit}
+          loading={isPending}
+          disabled={isPending || isRemoving}
+          style={styles.button}
+        >
+          Salvar
+        </Button>
+      </View>
+
+      <Dialog
+        visible={removeDialogVisible}
+        onDismiss={() => setRemoveDialogVisible(false)}
+        mode="danger"
+        title="Remover local"
+        message={`Tem certeza que deseja remover o local ${location?.name ?? ''}?`}
+        actions={[
+          {
+            label: 'Cancelar',
+            callback: () => setRemoveDialogVisible(false),
+          },
+          {
+            label: 'Remover',
+            isPrimary: true,
+            callback: () => {
+              setRemoveDialogVisible(false);
+              removeLocation();
+            },
+          },
+        ]}
+      />
     </KeyboardAwareScrollView>
   );
 };
@@ -365,11 +412,16 @@ const useStyles = (theme: DefaultTheme) =>
       fontWeight: 'bold',
       color: theme.colors.primary,
     },
-    button: {
+    buttonsContainer: {
       position: 'absolute',
       bottom: 30,
       left: 16,
       right: 16,
+      flexDirection: 'row',
+      gap: 12,
+    },
+    button: {
+      flex: 1,
     },
   });
 
