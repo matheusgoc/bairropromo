@@ -1,6 +1,7 @@
 import ListModel from '@/models/list.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
+import ProfileModel from '@/models/profile.model';
 
 const mockLoaction: PlaceLocationModel = {
   id: '1',
@@ -79,6 +80,32 @@ const mockPlace: PlaceModel = {
   ],
 };
 
+const mockSearchableOwners: ProfileModel[] = [
+  {
+    id: 'owner-1',
+    name: 'João Silva',
+    email: 'joao@exemplo.com',
+    role: 'owner',
+    subscriptionStatus: 'success',
+  },
+  {
+    id: 'owner-2',
+    name: 'Maria Santos',
+    email: 'maria@exemplo.com',
+    role: 'owner',
+    subscriptionStatus: 'success',
+  },
+  {
+    id: 'owner-3',
+    name: 'Carlos Oliveira',
+    email: 'carlos@exemplo.com',
+    role: 'owner',
+    subscriptionStatus: 'success',
+  },
+];
+
+const mockPlaceOwners = new Map<string, ProfileModel[]>();
+
 export interface PlacePayload {
   name: string;
   description?: string;
@@ -150,6 +177,39 @@ const PlaceService = {
 
   unpublish: async (id: string) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
+  },
+
+  searchOwner: async (email: string): Promise<ProfileModel | null> => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return (
+      mockSearchableOwners.find(
+        (o) => o.email.toLowerCase() === email.trim().toLowerCase(),
+      ) ?? null
+    );
+  },
+
+  listOwners: async (placeId: string): Promise<ProfileModel[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return mockPlaceOwners.get(placeId) ?? [];
+  },
+
+  associateOwner: async (placeId: string, ownerId: string): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const owner = mockSearchableOwners.find((o) => o.id === ownerId);
+    if (!owner) return;
+    const current = mockPlaceOwners.get(placeId) ?? [];
+    if (!current.find((o) => o.id === ownerId)) {
+      mockPlaceOwners.set(placeId, [...current, owner]);
+    }
+  },
+
+  disconnectOwner: async (placeId: string, ownerId: string): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const current = mockPlaceOwners.get(placeId) ?? [];
+    mockPlaceOwners.set(
+      placeId,
+      current.filter((o) => o.id !== ownerId),
+    );
   },
 
   uploadImage: async (
