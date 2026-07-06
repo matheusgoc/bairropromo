@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { FC, memo, useCallback } from 'react';
+import { FC, memo, useCallback, useEffect } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,29 +10,6 @@ import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
 import { useAuth } from '@/hooks/use-auth';
 import ProfileService from '@/services/profile.service';
-
-const SignedOutView: FC = () => (
-  <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 15 }}>
-    <Text variant="titleMedium" style={{ margin: 20 }}>
-      Seja bem-vindo(a)!
-    </Text>
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 20,
-      }}
-    >
-      <Text variant="titleMedium">
-        Faça parte do Bairro e aproveite as ofertas!
-      </Text>
-      <Button mode="contained" icon="login" onPress={() => {}}>
-        Entrar
-      </Button>
-    </View>
-  </SafeAreaView>
-);
 
 const SubscriptionSuccessCard: FC = () => (
   <Card mode="contained" style={{ marginTop: 20 }}>
@@ -46,7 +23,7 @@ const SubscriptionSuccessCard: FC = () => (
       </Text>
     </Card.Content>
     <Card.Actions style={{ justifyContent: 'center', marginBottom: 10 }}>
-      <Button mode="contained">Querto modificar minha assinatura!</Button>
+      <Button mode="contained">Quero modificar minha assinatura!</Button>
     </Card.Actions>
   </Card>
 );
@@ -90,7 +67,12 @@ const SubscriptionNotAppliedCard: FC = () => (
       </View>
     </Card.Content>
     <Card.Actions style={{ justifyContent: 'center', marginVertical: 10 }}>
-      <Button mode="contained">Quero ser membro do bairro!</Button>
+      <Button
+        mode="contained"
+        onPress={() => router.push('/onboard/onboard-apply')}
+      >
+        Quero ser membro do bairro!
+      </Button>
     </Card.Actions>
   </Card>
 );
@@ -166,7 +148,12 @@ const ProfileView: FC = () => {
     });
   }, [profile?.id]);
 
-  if (!isSignedIn) return <SignedOutView />;
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.push('/onboard/onboard-call');
+    }
+  }, [isSignedIn]);
+
   if (isPending || !profile) return <LoadingSkeleton />;
 
   const isOwner = ['owner', 'admin', 'master'].includes(profile.role ?? '');

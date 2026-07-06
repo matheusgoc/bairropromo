@@ -4,7 +4,8 @@ import {
   ThemeProvider,
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
+import { FC } from 'react';
 import { useColorScheme } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { adaptNavigationTheme, PaperProvider } from 'react-native-paper';
@@ -19,6 +20,53 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const Router: FC = () => (
+  <Stack screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="(tabs)" />
+    <Stack.Screen
+      name="onboard/onboard-welcome"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-call"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-gate"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-signin"
+      options={{
+        title: 'Entrar',
+        presentation: 'formSheet',
+        sheetGrabberVisible: true,
+        sheetAllowedDetents: [0.7],
+      }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-reset"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-signup"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-password"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-apply"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="onboard/onboard-success"
+      options={{ headerShown: false }}
+    />
+  </Stack>
+);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -45,7 +93,7 @@ export default function RootLayout() {
         <PaperProvider theme={paperTheme}>
           <QueryClientProvider client={queryClient}>
             <KeyboardProvider>
-              <Slot />
+              <Router />
             </KeyboardProvider>
           </QueryClientProvider>
         </PaperProvider>
