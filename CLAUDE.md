@@ -49,11 +49,53 @@ Root layout wraps everything in `PaperProvider` + `ThemeProvider` using `@pchmn/
 | ---------------------- | ---------------------------------------------- |
 | UI / Material Design 3 | `react-native-paper`                           |
 | Navigation             | `expo-router`, `@react-navigation/bottom-tabs` |
+| Server state / caching | `@tanstack/react-query`                        |
+| Forms                  | `react-hook-form`                              |
+| Input masking          | `react-native-mask-input`                      |
+| Images                 | `expo-image`, `expo-image-picker`              |
+| Keyboard avoidance     | `react-native-keyboard-controller`             |
+| Local storage          | `@react-native-async-storage/async-storage`    |
+| Toast notifications    | `burnt`                                        |
 | Animations / Skeletons | `moti`                                         |
 | Dates                  | `dayjs`                                        |
 | QR codes               | `react-native-qrcode-svg`                      |
 | Icons                  | `@expo/vector-icons` (Material Design icons)   |
 | Haptics                | `expo-haptics`                                 |
+
+### App Entry & Navigation
+
+`src/app/index.tsx` checks `useFirstLaunch()` (AsyncStorage flag) and redirects to `/onboard/onboard-welcome` on first launch, otherwise to the main `(tabs)` layout.
+
+Main tabs: **Offer**, **Place**, **Profile**. The Profile tab contains nested business-owner routes under `profile/place/[id]/` for managing a place's info, locations, and offers.
+
+### Onboarding Flow (`src/app/onboard/`)
+
+Nine-screen sequence shown only on first launch:
+`welcome → call → gate → signin → reset → signup → password → apply → success`
+
+### Services (`src/services/`)
+
+Thin business-logic layer consumed by React Query hooks:
+
+- `place.service.ts`, `offer.service.ts`, `location.service.ts` — CRUD for business entities
+- `profile.service.ts` — user profile
+- `alert.service.ts`, `toast.service.ts` — native UI helpers
+
+### Data Models (`src/models/`)
+
+TypeScript interfaces for all domain objects: `profile`, `place`, `offer`, `place-location`, `category`, `list` (generic paginated response).
+
+### Custom Hooks (`src/hooks/`)
+
+- `use-first-launch` — AsyncStorage flag that gates the onboarding flow
+- `use-auth` — authentication state (`{ isSignedIn }`)
+- `use-app-theme` — project-scoped wrapper around `useTheme()`
+- `use-place-image-upload` — image picker + upload for place photos
+- `use-snackbar` — imperative snackbar API
+
+### Form Pattern
+
+All forms use `react-hook-form`. Controlled inputs live in `src/components/form/`: `text-input`, `phone-input`, `select-input`, `switch`. Phone and date fields use `react-native-mask-input` for formatting.
 
 ### Build Profiles (EAS)
 
