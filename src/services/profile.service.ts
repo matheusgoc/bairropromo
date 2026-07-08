@@ -1,5 +1,10 @@
 import ProfileModel from '@/models/profile.model';
 
+export interface SigninPayload {
+  email: string;
+  password: string;
+}
+
 export interface ResetPayload {
   email: string;
 }
@@ -21,6 +26,11 @@ export interface SignupPayload {
   gender?: string;
 }
 
+export interface AuthResponse {
+  token: string;
+  profile: ProfileModel;
+}
+
 const mockProfile: ProfileModel = {
   id: '1',
   name: 'João da Silva',
@@ -33,6 +43,11 @@ const mockProfile: ProfileModel = {
 };
 
 const ProfileService = {
+  signin: async (_data: SigninPayload): Promise<AuthResponse> => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return { token: 'mock-token-abc123', profile: mockProfile };
+  },
+
   get: async (): Promise<ProfileModel> => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     return mockProfile;
@@ -51,14 +66,21 @@ const ProfileService = {
     await new Promise((resolve) => setTimeout(resolve, 1500));
   },
 
-  signup: async (data: SignupPayload): Promise<ProfileModel> => {
+  signup: async (data: SignupPayload): Promise<AuthResponse> => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    return { ...mockProfile, name: data.name, email: data.email };
+    return {
+      token: 'mock-token-abc123',
+      profile: { ...mockProfile, name: data.name, email: data.email },
+    };
   },
 
   apply: async (_data: ApplyPayload): Promise<ProfileModel> => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     return { ...mockProfile, subscriptionStatus: 'success' };
+  },
+
+  signout: async (): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
   },
 };
 

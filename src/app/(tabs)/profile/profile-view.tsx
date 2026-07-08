@@ -1,8 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { FC, memo, useCallback, useEffect } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
-import { Avatar, Button, Card, Divider, Text } from 'react-native-paper';
+import { Alert, RefreshControl, ScrollView, View } from 'react-native';
+import {
+  Avatar,
+  Button,
+  Card,
+  Divider,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
@@ -122,7 +129,23 @@ const MyPlacesNotAppliedCard: FC<PlaceCardProps> = ({ onPress }) => (
 );
 
 const ProfileView: FC = () => {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
+  const theme = useTheme();
+
+  const { mutate: mutateSignout, isPending: isSigningOut } = useMutation({
+    mutationFn: ProfileService.signout,
+    onSuccess: () => {
+      signOut();
+      router.replace('/onboard/onboard-call');
+    },
+  });
+
+  const handleSignOut = useCallback(() => {
+    Alert.alert('Sair da conta', 'Deseja realmente sair da sua conta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: () => mutateSignout() },
+    ]);
+  }, [mutateSignout]);
 
   const {
     data: profile,
@@ -188,6 +211,16 @@ const ProfileView: FC = () => {
         ) : (
           <MyPlacesNotAppliedCard onPress={goToPlacePage} />
         )}
+        <Button
+          icon="logout"
+          onPress={handleSignOut}
+          loading={isSigningOut}
+          disabled={isSigningOut}
+          textColor={theme.colors.error}
+          style={{ marginTop: 24, marginBottom: 16 }}
+        >
+          Sair da conta
+        </Button>
       </ScrollView>
     </SafeAreaView>
   );

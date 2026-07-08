@@ -12,6 +12,7 @@ import SelectInput from '@/components/form/select-input';
 import TextInput from '@/components/form/text-input';
 import { DATE_MASK } from '@/constants';
 import useAppTheme from '@/hooks/use-app-theme';
+import { useAuth } from '@/hooks/use-auth';
 import ProfileService, { SignupPayload } from '@/services/profile.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
@@ -27,6 +28,7 @@ const GENDER_OPTIONS = [
 const OnboardSignup: FC = () => {
   const theme = useAppTheme();
   const styles = useStyles(theme);
+  const { signIn } = useAuth();
 
   const { control, handleSubmit } = useForm<SignupPayload>({
     defaultValues: {
@@ -41,7 +43,8 @@ const OnboardSignup: FC = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: SignupPayload) => ProfileService.signup(data),
-    onSuccess: () => {
+    onSuccess: ({ token }) => {
+      signIn(token);
       ToastService.success('Cadastro realizado com sucesso!');
       router.push('/onboard/onboard-password');
     },
