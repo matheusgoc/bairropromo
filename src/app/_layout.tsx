@@ -13,6 +13,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DARK_THEME, LIGHT_THEME } from '@/theme';
 
+if (__DEV__) {
+  void import('../ReactotronConfig');
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
