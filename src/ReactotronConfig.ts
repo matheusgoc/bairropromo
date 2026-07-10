@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Reactotron from 'reactotron-react-native';
 import { StoreApi } from 'zustand';
 
+import { useAppStore } from '@/stores/app.store';
 import { useAuthStore } from '@/stores/auth.store';
 
 function trackStore<T>(name: string, store: StoreApi<T>) {
@@ -26,3 +27,17 @@ Reactotron.setAsyncStorageHandler(AsyncStorage)
 
 // Add one line per store here
 trackStore('auth', useAuthStore);
+trackStore('app', useAppStore);
+
+Reactotron.onCustomCommand({
+  command: 'Reset First Launch',
+  description:
+    'Set isFirstLaunch=true so the onboard welcome shows on next reload',
+  handler: () => useAppStore.getState().setIsFirstLaunch(true),
+});
+
+Reactotron.onCustomCommand({
+  command: 'Sign Out',
+  description: 'Clear the auth token',
+  handler: () => useAuthStore.getState().signOut(),
+});
