@@ -2,7 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { FC, memo, useCallback } from 'react';
+import { FC, memo, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Avatar,
@@ -19,7 +19,9 @@ import List from '@/components/ui/list';
 import OfferStatusBadge from '@/components/ui/offer-status-badge';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
+import SubscriptionDialog from '@/components/ui/subscription-dialog';
 import { extractInitials } from '@/helpers';
+import { useSubscription } from '@/hooks/use-subscription';
 import OfferModel from '@/models/offer.model';
 import OfferService from '@/services/offer.service';
 
@@ -29,7 +31,14 @@ interface OfferProps {
 
 const Offer: FC<OfferProps> = memo(({ offer }) => {
   const styles = usePlaceStyles(offer?.status ?? 'active');
+  const { isSubscribed } = useSubscription();
+  const [subscriptionDialog, setSubscriptionDialog] = useState(false);
+
   const showOfferCode = () => {
+    if (!isSubscribed) {
+      setSubscriptionDialog(true);
+      return;
+    }
     router.navigate({
       pathname: '/offer/offer-code/[id]',
       params: { id: offer.id ?? 0, title: offer.title ?? '' },
@@ -88,6 +97,11 @@ const Offer: FC<OfferProps> = memo(({ offer }) => {
         <OfferStatusBadge status={offer.status} />
       ) : null}
       <Divider />
+      <SubscriptionDialog
+        visible={subscriptionDialog}
+        onDismiss={() => setSubscriptionDialog(false)}
+        onSubscribe={() => router.push('/onboard/onboard-apply')}
+      />
     </View>
   );
 });

@@ -13,6 +13,7 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSubscription } from '@/hooks/use-subscription';
 import ProfileService, { ApplyPayload } from '@/services/profile.service';
 import ToastService from '@/services/toast.service';
 
@@ -107,13 +108,17 @@ const PriceOptionCard: FC<PriceOptionCardProps> = ({
 
 const OnboardApply: FC = () => {
   const [dialogVisible, setDialogVisible] = useState(false);
+  const { setStatus } = useSubscription();
 
   const { control, handleSubmit, watch } = useForm<ApplyPayload>();
   const plan = watch('plan');
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: ApplyPayload) => ProfileService.apply(data),
-    onSuccess: () => router.push('/onboard/onboard-success'),
+    onSuccess: () => {
+      setStatus('success');
+      router.push('/onboard/onboard-success');
+    },
     onError: () =>
       ToastService.error(
         'Não foi possível processar sua assinatura. Tente novamente.',

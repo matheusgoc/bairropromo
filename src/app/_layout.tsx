@@ -3,14 +3,21 @@ import {
   DefaultTheme as NavigationDefaultTheme,
   ThemeProvider,
 } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query';
 import { Stack } from 'expo-router';
-import { FC } from 'react';
+import { FC, ReactNode, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { adaptNavigationTheme, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/hooks/use-auth';
+import { useSubscription } from '@/hooks/use-subscription';
+import ProfileService from '@/services/profile.service';
 import { DARK_THEME, LIGHT_THEME } from '@/theme';
 
 if (__DEV__) {
@@ -24,6 +31,27 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const AppBootstrap: FC<{ children: ReactNode }> = ({ children }) => {
+  const { isSignedIn } = useAuth();
+  const { setStatus, reset } = useSubscription();
+
+  const { data } = useQuery({
+    queryKey: ['profile'],
+    queryFn: ProfileService.get,
+    enabled: isSignedIn,
+  });
+
+  useEffect(() => {
+    if (data?.subscriptionStatus) setStatus(data.subscriptionStatus);
+  }, [data?.subscriptionStatus, setStatus]);
+
+  useEffect(() => {
+    if (!isSignedIn) reset();
+  }, [isSignedIn, reset]);
+
+  return <>{children}</>;
+};
 
 const Router: FC = () => (
   <Stack screenOptions={{ headerShown: false }}>
@@ -96,9 +124,11 @@ export default function RootLayout() {
       <ThemeProvider value={navTheme}>
         <PaperProvider theme={paperTheme}>
           <QueryClientProvider client={queryClient}>
-            <KeyboardProvider>
-              <Router />
-            </KeyboardProvider>
+            <AppBootstrap>
+              <KeyboardProvider>
+                <Router />
+              </KeyboardProvider>
+            </AppBootstrap>
           </QueryClientProvider>
         </PaperProvider>
       </ThemeProvider>

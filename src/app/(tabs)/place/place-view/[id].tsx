@@ -1,21 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { FC, Fragment, memo, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Card, Divider, Icon, List, Switch, Text } from 'react-native-paper';
 
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
+import SubscriptionDialog from '@/components/ui/subscription-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { useSubscription } from '@/hooks/use-subscription';
 import OfferModel from '@/models/offer.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel from '@/models/place.model';
+import { HttpError } from '@/services/http.service';
+import OfferService from '@/services/offer.service';
 import PlaceService from '@/services/place.service';
 
 const PlaceView: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [signedPromos, setSignedPromos] = useState<string[]>([]);
+  const [authDialog, setAuthDialog] = useState(false);
+  const [subscriptionDialog, setSubscriptionDialog] = useState(false);
+
+  const { isSignedIn } = useAuth();
+  const { isSubscribed, setStatus } = useSubscription();
 
   const {
     data: place,
@@ -28,15 +38,32 @@ const PlaceView: FC = () => {
   });
 
   const apply = useCallback(
-    (id: string) => {
-      const index = signedPromos.findIndex((vid) => vid === id);
-      if (index >= 0) {
-        setSignedPromos((prev) => prev.toSpliced(index, 1));
-      } else {
-        setSignedPromos((prev) => [...prev, id]);
+    async (offerId: string) => {
+      if (!isSignedIn) {
+        setAuthDialog(true);
+        return;
+      }
+      if (!isSubscribed) {
+        setSubscriptionDialog(true);
+        return;
+      }
+      const index = signedPromos.findIndex((v) => v === offerId);
+      try {
+        if (index >= 0) {
+          await OfferService.unassign(offerId);
+          setSignedPromos((prev) => prev.toSpliced(index, 1));
+        } else {
+          await OfferService.assign(offerId);
+          setSignedPromos((prev) => [...prev, offerId]);
+        }
+      } catch (err) {
+        if (err instanceof HttpError && err.status === 402) {
+          setStatus('pending');
+          setSubscriptionDialog(true);
+        }
       }
     },
-    [signedPromos],
+    [isSignedIn, isSubscribed, signedPromos, setStatus],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -90,7 +117,13 @@ const PlaceView: FC = () => {
       </List.Section>
       <List.Section>
         {place.locations.map((location) => (
-          <Location key={location.id} location={location} place={place} />
+          <Location
+            key={location.id}
+            location={location}
+            place={place}
+            signedPromos={signedPromos}
+            onApply={apply}
+          />
         ))}
       </List.Section>
       {place.description && (
@@ -98,6 +131,17 @@ const PlaceView: FC = () => {
           {place.description}
         </Text>
       )}
+
+      <SubscriptionDialog
+        visible={authDialog}
+        onDismiss={() => setAuthDialog(false)}
+        onSubscribe={() => router.push('/onboard/onboard-call')}
+      />
+      <SubscriptionDialog
+        visible={subscriptionDialog}
+        onDismiss={() => setSubscriptionDialog(false)}
+        onSubscribe={() => router.push('/onboard/onboard-apply')}
+      />
     </ScrollView>
   );
 };
@@ -129,75 +173,61 @@ const Offer: FC<{
 
 Offer.displayName = 'Offer';
 
-const Location: FC<{ location: PlaceLocationModel; place: PlaceModel }> = memo(
-  ({ location, place }) => {
-    const [signedPromos, setSignedPromos] = useState<string[]>([]);
-    const apply = useCallback(
-      (id: string) => {
-        const index = signedPromos.findIndex((vid) => vid === id);
-        if (index >= 0) {
-          setSignedPromos((prev) => prev.toSpliced(index, 1));
-        } else {
-          setSignedPromos((prev) => [...prev, id]);
-        }
-      },
-      [signedPromos],
-    );
-
-    return (
-      <Card style={{ margin: 10 }} mode="contained">
-        <Card.Title
-          title={location.name}
-          subtitle={`${location.city} - ${location.state}`}
-          titleStyle={{ fontWeight: 'bold' }}
-        />
+const Location: FC<{
+  location: PlaceLocationModel;
+  place: PlaceModel;
+  signedPromos: string[];
+  onApply: (id: string) => Promise<void>;
+}> = memo(({ location, place, signedPromos, onApply }) => (
+  <Card style={{ margin: 10 }} mode="contained">
+    <Card.Title
+      title={location.name}
+      subtitle={`${location.city} - ${location.state}`}
+      titleStyle={{ fontWeight: 'bold' }}
+    />
+    <Card.Content>
+      {location.offers?.map((offer, i) => (
+        <Fragment key={offer.id}>
+          <Offer
+            offer={offer}
+            isSigned={!!signedPromos.find((sp) => sp === offer.id)}
+            onApply={() => onApply(offer.id)}
+          />
+          {i < place.offers.length - 1 && <Divider />}
+        </Fragment>
+      ))}
+      <Card style={{ marginBottom: 10 }}>
+        <Card.Title title="Endereço:" />
         <Card.Content>
-          {location.offers?.map((offer, i) => (
-            <Fragment key={offer.id}>
-              <Offer
-                offer={offer}
-                isSigned={!!signedPromos.find((sp) => sp === offer.id)}
-                onApply={() => apply(offer.id)}
-              />
-              {i < place.offers.length - 1 && <Divider />}
-            </Fragment>
-          ))}
-          <Card style={{ marginBottom: 10 }}>
-            <Card.Title title="Endereço:" />
-            <Card.Content>
-              <Text variant="bodyLarge">{location.address}</Text>
-              <Text variant="bodyLarge">
-                {location.city} - {location.state}
-              </Text>
-              <Text variant="bodyLarge">CEP: {location.postalCode}</Text>
-            </Card.Content>
-          </Card>
-          {(location.phone || place.website || location.email) && (
-            <Card>
-              <Card.Title title="Contato:" />
-              <Card.Content>
-                {location.phone && (
-                  <LocationContatctItem
-                    label={location.phone}
-                    icon={
-                      location.isWhatsapp ? 'whatsapp' : 'phone-dial-outline'
-                    }
-                  />
-                )}
-                {location.email && (
-                  <LocationContatctItem label={location.email} icon="at" />
-                )}
-                {place.website && (
-                  <LocationContatctItem label={place.website} icon="link" />
-                )}
-              </Card.Content>
-            </Card>
-          )}
+          <Text variant="bodyLarge">{location.address}</Text>
+          <Text variant="bodyLarge">
+            {location.city} - {location.state}
+          </Text>
+          <Text variant="bodyLarge">CEP: {location.postalCode}</Text>
         </Card.Content>
       </Card>
-    );
-  },
-);
+      {(location.phone || place.website || location.email) && (
+        <Card>
+          <Card.Title title="Contato:" />
+          <Card.Content>
+            {location.phone && (
+              <LocationContatctItem
+                label={location.phone}
+                icon={location.isWhatsapp ? 'whatsapp' : 'phone-dial-outline'}
+              />
+            )}
+            {location.email && (
+              <LocationContatctItem label={location.email} icon="at" />
+            )}
+            {place.website && (
+              <LocationContatctItem label={place.website} icon="link" />
+            )}
+          </Card.Content>
+        </Card>
+      )}
+    </Card.Content>
+  </Card>
+));
 
 Location.displayName = 'Location';
 

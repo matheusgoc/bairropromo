@@ -4,6 +4,7 @@ import { StoreApi } from 'zustand';
 
 import { useAppStore } from '@/stores/app.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useSubscriptionStore } from '@/stores/subscription.store';
 
 function trackStore<T>(name: string, store: StoreApi<T>) {
   Reactotron.display({
@@ -28,6 +29,7 @@ Reactotron.setAsyncStorageHandler(AsyncStorage)
 // Add one line per store here
 trackStore('auth', useAuthStore);
 trackStore('app', useAppStore);
+trackStore('subscription', useSubscriptionStore);
 
 Reactotron.onCustomCommand({
   command: 'Reset First Launch',
@@ -40,4 +42,10 @@ Reactotron.onCustomCommand({
   command: 'Sign Out',
   description: 'Clear the auth token',
   handler: () => useAuthStore.getState().signOut(),
+});
+
+Reactotron.onCustomCommand({
+  command: 'Reset Subscription',
+  description: 'Clear subscription status (set to null)',
+  handler: () => useSubscriptionStore.getState().reset(),
 });

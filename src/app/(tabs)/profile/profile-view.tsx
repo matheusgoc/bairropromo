@@ -16,6 +16,7 @@ import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
 import { useAuth } from '@/hooks/use-auth';
+import { useSubscription } from '@/hooks/use-subscription';
 import ProfileService from '@/services/profile.service';
 
 const SubscriptionSuccessCard: FC = () => (
@@ -130,6 +131,7 @@ const MyPlacesNotAppliedCard: FC<PlaceCardProps> = ({ onPress }) => (
 
 const ProfileView: FC = () => {
   const { isSignedIn, signOut } = useAuth();
+  const { setStatus } = useSubscription();
   const theme = useTheme();
 
   const { mutate: mutateSignout, isPending: isSigningOut } = useMutation({
@@ -176,6 +178,10 @@ const ProfileView: FC = () => {
       router.push('/onboard/onboard-call');
     }
   }, [isSignedIn]);
+
+  useEffect(() => {
+    if (profile?.subscriptionStatus) setStatus(profile.subscriptionStatus);
+  }, [profile?.subscriptionStatus, setStatus]);
 
   if (isPending || !profile) return <LoadingSkeleton />;
 

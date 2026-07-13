@@ -1,31 +1,75 @@
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FC, memo } from 'react';
+import { FC, memo, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Avatar, Button, Text, useTheme } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Dialog from '@/components/ui/dialog';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
+import { useSubscription } from '@/hooks/use-subscription';
+import { HttpError } from '@/services/http.service';
 import OfferService from '@/services/offer.service';
 
 const OfferCode: FC = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const { setStatus } = useSubscription();
+  const [paymentDialog, setPaymentDialog] = useState(false);
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, error } = useQuery({
     queryKey: ['offer-code', id],
     queryFn: () => OfferService.getCode(id),
+    retry: false,
   });
+
+  useEffect(() => {
+    if (error instanceof HttpError && error.status === 402) {
+      setStatus('pending');
+      setPaymentDialog(true);
+    }
+  }, [error, setStatus]);
 
   const offer = data?.offer;
 
   if (isPending || !offer) {
-    return <LoadingSkeleton />;
+    return (
+      <>
+        <LoadingSkeleton />
+        <Dialog
+          visible={paymentDialog}
+          onDismiss={() => {
+            setPaymentDialog(false);
+            router.back();
+          }}
+          title="Ops! Tem algum problema com a sua assinatura!"
+          message="Não foi possível carregar o código. Sua assinatura pode estar com pagamento pendente."
+          mode="warning"
+          actions={[
+            {
+              label: 'Cancelar',
+              callback: () => {
+                setPaymentDialog(false);
+                router.back();
+              },
+            },
+            {
+              label: 'Regularizar',
+              isPrimary: true,
+              callback: () => {
+                setPaymentDialog(false);
+                router.replace('/onboard/onboard-apply');
+              },
+            },
+          ]}
+        />
+      </>
+    );
   }
 
   return (

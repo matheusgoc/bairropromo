@@ -2,6 +2,16 @@ import { getAuthToken } from '@/stores/auth.store';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
+export class HttpError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -19,7 +29,8 @@ async function request<T>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new HttpError(res.status, `HTTP ${res.status}`);
+
   return res.json() as Promise<T>;
 }
 
