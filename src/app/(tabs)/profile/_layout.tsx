@@ -12,6 +12,7 @@ const ProfileLayout: FC = () => {
         name="profile-view"
         options={{ headerShown: false, title: 'Perfil' }}
       />
+      <Stack.Screen name="profile-form" options={{ title: 'Minha Conta' }} />
       <Stack.Screen
         name="place/place-list"
         options={{

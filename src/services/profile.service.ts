@@ -17,13 +17,13 @@ export interface ApplyPayload {
   plan: 'monthly' | 'yearly';
 }
 
-export interface SignupPayload {
+export interface ProfileFormPayload {
   name: string;
   email: string;
   phone?: string;
   whatsapp?: boolean;
   dob?: string;
-  gender?: string;
+  gender?: ProfileModel['gender'] | '';
 }
 
 export interface AuthResponse {
@@ -66,7 +66,7 @@ const ProfileService = {
     await new Promise((resolve) => setTimeout(resolve, 1500));
   },
 
-  signup: async (data: SignupPayload): Promise<AuthResponse> => {
+  signup: async (data: ProfileFormPayload): Promise<AuthResponse> => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     return {
       token: 'mock-token-abc123',

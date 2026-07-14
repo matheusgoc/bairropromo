@@ -218,6 +218,14 @@ const ProfileView: FC = () => {
           <MyPlacesNotAppliedCard onPress={goToPlacePage} />
         )}
         <Button
+          icon="account-edit"
+          mode="outlined"
+          onPress={() => router.navigate('/profile/profile-form')}
+          style={{ marginTop: 20 }}
+        >
+          Minha Conta
+        </Button>
+        <Button
           icon="logout"
           onPress={handleSignOut}
           loading={isSigningOut}
