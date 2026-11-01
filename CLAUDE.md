@@ -52,7 +52,9 @@ Pre-commit hooks run `lint-staged` automatically (Prettier + ESLint on staged `*
 
 ### Theming
 
-Root layout wraps everything in `PaperProvider` + `ThemeProvider` using `@pchmn/expo-material3-theme`. Dynamic Material3 colors adapt to the device's light/dark mode. Access theme colors via `useTheme()` from `react-native-paper`.
+Root layout wraps everything in `PaperProvider` + `ThemeProvider`. The Paper themes are static MD3 light/dark themes with extra `success`/`warning` colors, defined in `src/theme.ts` and picked from the device's color scheme. The navigation theme is derived from them with Paper's `adaptNavigationTheme`. Access theme colors via `useTheme()` from `react-native-paper`.
+
+Import navigation APIs (`ThemeProvider`, `DefaultTheme`, `DarkTheme`, etc.) from `expo-router`, never from `@react-navigation/*`. Since SDK 56, expo-router no longer depends on React Navigation.
 
 ### Path Aliases
 
@@ -60,22 +62,22 @@ Root layout wraps everything in `PaperProvider` + `ThemeProvider` using `@pchmn/
 
 ### Key Dependencies
 
-| Purpose                | Library                                        |
-| ---------------------- | ---------------------------------------------- |
-| UI / Material Design 3 | `react-native-paper`                           |
-| Navigation             | `expo-router`, `@react-navigation/bottom-tabs` |
-| Server state / caching | `@tanstack/react-query`                        |
-| Forms                  | `react-hook-form`                              |
-| Input masking          | `react-native-mask-input`                      |
-| Images                 | `expo-image`, `expo-image-picker`              |
-| Keyboard avoidance     | `react-native-keyboard-controller`             |
-| Local storage          | `@react-native-async-storage/async-storage`    |
-| Toast notifications    | `burnt`                                        |
-| Animations / Skeletons | `moti`                                         |
-| Dates                  | `dayjs`                                        |
-| QR codes               | `react-native-qrcode-svg`                      |
-| Icons                  | `@expo/vector-icons` (Material Design icons)   |
-| Haptics                | `expo-haptics`                                 |
+| Purpose                | Library                                               |
+| ---------------------- | ----------------------------------------------------- |
+| UI / Material Design 3 | `react-native-paper`                                  |
+| Navigation             | `expo-router`                                         |
+| Server state / caching | `@tanstack/react-query`                               |
+| Forms                  | `react-hook-form`                                     |
+| Input masking          | `react-native-mask-input`                             |
+| Images                 | `expo-image`, `expo-image-picker`                     |
+| Keyboard avoidance     | `react-native-keyboard-controller`                    |
+| Local storage          | `@react-native-async-storage/async-storage`           |
+| Toast notifications    | `burnt`                                               |
+| Animations / Skeletons | `moti` (`moti/skeleton` needs `expo-linear-gradient`) |
+| Dates                  | `dayjs`                                               |
+| QR codes               | `react-native-qrcode-svg`                             |
+| Icons                  | `@expo/vector-icons` (Material Design icons)          |
+| Haptics                | `expo-haptics`                                        |
 
 ### App Entry & Navigation
 
