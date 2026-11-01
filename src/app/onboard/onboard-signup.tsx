@@ -52,10 +52,12 @@ const OnboardSignup: FC = () => {
       <View style={styles.buttons}>
         <Button
           mode="contained"
-          onPress={handleSubmit(
-            (data) => mutate(data),
-            () => ToastService.error('Dados incorretos!'),
-          )}
+          onPress={() =>
+            handleSubmit(
+              (data) => mutate(data),
+              () => ToastService.error('Dados incorretos!'),
+            )()
+          }
           loading={isPending}
           disabled={isPending}
         >

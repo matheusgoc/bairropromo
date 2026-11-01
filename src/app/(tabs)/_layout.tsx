@@ -8,6 +8,9 @@ const TabsLayout: FC = () => {
       <Tabs.Screen
         name="place"
         options={{
+          // the tab stacks have no index route; since SDK 58 the URL alone picks the
+          // first screen, so point each tab at its main screen explicitly
+          href: '/place/place-list',
           title: 'Bairro',
           tabBarIcon: ({ color }) => (
             <Icon
@@ -21,6 +24,7 @@ const TabsLayout: FC = () => {
       <Tabs.Screen
         name="offer"
         options={{
+          href: '/offer/offer-list',
           title: 'Promoções',
           tabBarIcon: ({ color }) => (
             <Icon source="percent" color={color as string} size={24} />
@@ -30,6 +34,7 @@ const TabsLayout: FC = () => {
       <Tabs.Screen
         name="profile"
         options={{
+          href: '/profile/profile-view',
           title: 'Perfil',
           tabBarIcon: ({ color }) => (
             <Icon source="account-details" color={color as string} size={24} />

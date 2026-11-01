@@ -3,7 +3,7 @@ import { FC } from 'react';
 
 const SharedLayout: FC = () => {
   return (
-    <Stack>
+    <Stack screenOptions={{ headerTransparent: false }}>
       <Stack.Screen
         name="offer-list"
         options={{ headerShown: false, title: 'Promoções' }}

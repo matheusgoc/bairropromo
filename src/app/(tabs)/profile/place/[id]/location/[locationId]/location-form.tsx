@@ -356,7 +356,7 @@ const LocationForm: FC = () => {
         )}
         <Button
           mode="contained"
-          onPress={onSubmit}
+          onPress={() => onSubmit()}
           loading={isPending}
           disabled={isPending || isRemoving}
           style={styles.button}

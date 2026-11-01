@@ -163,7 +163,7 @@ const OnboardApply: FC = () => {
           mode="contained"
           disabled={!plan || isPending}
           loading={isPending}
-          onPress={handleSubmit((data) => mutate(data))}
+          onPress={() => handleSubmit((data) => mutate(data))()}
           labelStyle={{ fontSize: 16 }}
         >
           Assinar

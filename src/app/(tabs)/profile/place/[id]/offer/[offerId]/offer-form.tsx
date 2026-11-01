@@ -178,7 +178,7 @@ const OfferForm: FC = () => {
         )}
         <Button
           mode="contained"
-          onPress={onSubmit}
+          onPress={() => onSubmit()}
           loading={isPending}
           disabled={isPending || isToggling}
           style={styles.button}

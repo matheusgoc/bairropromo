@@ -84,6 +84,7 @@ const OnboardWelcome: FC = () => {
           key={step}
           from={{ opacity: 0, translateX: 40 }}
           animate={{ opacity: 1, translateX: 0 }}
+          // @ts-expect-error moti 0.30 types resolve animate props to `any` under React Native 0.88's strict types
           transition={{ type: 'timing', duration: 350 }}
           style={{ alignItems: 'center', gap: 28 }}
         >

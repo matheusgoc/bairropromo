@@ -159,7 +159,9 @@ const OnboardPassword: FC = () => {
       <View style={styles.buttons}>
         <Button
           mode="contained"
-          onPress={handleSubmit(({ password: pw }) => mutate({ password: pw }))}
+          onPress={() =>
+            handleSubmit(({ password: pw }) => mutate({ password: pw }))()
+          }
           disabled={!canSubmit || isPending}
           loading={isPending}
         >

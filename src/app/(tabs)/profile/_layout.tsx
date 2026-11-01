@@ -7,7 +7,7 @@ const ProfileLayout: FC = () => {
   const router = useRouter();
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerTransparent: false }}>
       <Stack.Screen
         name="profile-view"
         options={{ headerShown: false, title: 'Perfil' }}

@@ -51,7 +51,7 @@ const OnboardReset: FC = () => {
       <View style={{ paddingBottom: 16 }}>
         <Button
           mode="contained"
-          onPress={handleSubmit((data) => mutate(data))}
+          onPress={() => handleSubmit((data) => mutate(data))()}
           loading={isPending}
           disabled={isPending}
           labelStyle={{ fontSize: 16 }}

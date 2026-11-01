@@ -94,10 +94,12 @@ const PlaceForm: FC = () => {
         />
         <Button
           mode="contained"
-          onPress={handleSubmit(
-            (data) => mutate(data),
-            () => ToastService.error('Dados incorretos!'),
-          )}
+          onPress={() =>
+            handleSubmit(
+              (data) => mutate(data),
+              () => ToastService.error('Dados incorretos!'),
+            )()
+          }
           loading={isPending}
           disabled={isPending}
           style={styles.button}
