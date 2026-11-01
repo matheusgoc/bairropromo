@@ -20,7 +20,7 @@ const OfferCode: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const { setStatus } = useSubscription();
-  const [paymentDialog, setPaymentDialog] = useState(false);
+  const [paymentDialogDismissed, setPaymentDialogDismissed] = useState(false);
 
   const { data, isPending, error } = useQuery({
     queryKey: ['offer-code', id],
@@ -28,12 +28,12 @@ const OfferCode: FC = () => {
     retry: false,
   });
 
+  const paymentRequired = error instanceof HttpError && error.status === 402;
+  const paymentDialog = paymentRequired && !paymentDialogDismissed;
+
   useEffect(() => {
-    if (error instanceof HttpError && error.status === 402) {
-      setStatus('pending');
-      setPaymentDialog(true);
-    }
-  }, [error, setStatus]);
+    if (paymentRequired) setStatus('pending');
+  }, [paymentRequired, setStatus]);
 
   const offer = data?.offer;
 
@@ -44,7 +44,7 @@ const OfferCode: FC = () => {
         <Dialog
           visible={paymentDialog}
           onDismiss={() => {
-            setPaymentDialog(false);
+            setPaymentDialogDismissed(true);
             router.back();
           }}
           title="Ops! Tem algum problema com a sua assinatura!"
@@ -54,7 +54,7 @@ const OfferCode: FC = () => {
             {
               label: 'Cancelar',
               callback: () => {
-                setPaymentDialog(false);
+                setPaymentDialogDismissed(true);
                 router.back();
               },
             },
@@ -62,7 +62,7 @@ const OfferCode: FC = () => {
               label: 'Regularizar',
               isPrimary: true,
               callback: () => {
-                setPaymentDialog(false);
+                setPaymentDialogDismissed(true);
                 router.replace('/onboard/onboard-apply');
               },
             },

@@ -1,14 +1,14 @@
 import {
-  DarkTheme as NavigationDarkTheme,
-  DefaultTheme as NavigationDefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
-import {
   QueryClient,
   QueryClientProvider,
   useQuery,
 } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import {
+  DarkTheme as NavigationDarkTheme,
+  DefaultTheme as NavigationDefaultTheme,
+  Stack,
+  ThemeProvider,
+} from 'expo-router';
 import { FC, ReactNode, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -100,6 +100,12 @@ const Router: FC = () => (
   </Stack>
 );
 
+// expo-router types theme colors as ColorValue while Paper expects strings;
+// the default navigation themes only contain plain color strings
+type PaperNavigationTheme = Parameters<
+  typeof adaptNavigationTheme
+>[0]['reactNavigationLight'];
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -108,14 +114,19 @@ export default function RootLayout() {
 
   // nav theme adaptation
   const { LightTheme, DarkTheme } = adaptNavigationTheme({
-    reactNavigationLight: NavigationDefaultTheme,
-    reactNavigationDark: NavigationDarkTheme,
+    reactNavigationLight: NavigationDefaultTheme as PaperNavigationTheme,
+    reactNavigationDark: NavigationDarkTheme as PaperNavigationTheme,
   });
   const navTheme =
     colorScheme === 'dark'
-      ? { ...DarkTheme, colors: { ...DarkTheme.colors, ...paperTheme.colors } }
+      ? {
+          ...DarkTheme,
+          fonts: NavigationDarkTheme.fonts,
+          colors: { ...DarkTheme.colors, ...paperTheme.colors },
+        }
       : {
           ...LightTheme,
+          fonts: NavigationDefaultTheme.fonts,
           colors: { ...LightTheme.colors, ...paperTheme.colors },
         };
 

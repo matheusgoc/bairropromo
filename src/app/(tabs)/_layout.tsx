@@ -10,7 +10,11 @@ const TabsLayout: FC = () => {
         options={{
           title: 'Bairro',
           tabBarIcon: ({ color }) => (
-            <Icon source="map-marker-multiple" color={color} size={24} />
+            <Icon
+              source="map-marker-multiple"
+              color={color as string}
+              size={24}
+            />
           ),
         }}
       />
@@ -19,7 +23,7 @@ const TabsLayout: FC = () => {
         options={{
           title: 'Promoções',
           tabBarIcon: ({ color }) => (
-            <Icon source="percent" color={color} size={24} />
+            <Icon source="percent" color={color as string} size={24} />
           ),
         }}
       />
@@ -28,7 +32,7 @@ const TabsLayout: FC = () => {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => (
-            <Icon source="account-details" color={color} size={24} />
+            <Icon source="account-details" color={color as string} size={24} />
           ),
         }}
       />
