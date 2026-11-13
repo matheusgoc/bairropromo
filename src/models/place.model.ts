@@ -17,9 +17,11 @@ interface PlaceModel {
   category: CategoryModel;
   photo: string;
   logo?: string;
+  draftPhoto?: string;
+  draftLogo?: string;
   website?: string;
-  locations: PlaceLocation[];
-  offers: OfferModel[];
+  locations?: PlaceLocation[];
+  offers?: OfferModel[];
   status: PlaceStatus;
   reason: string;
   published: boolean;

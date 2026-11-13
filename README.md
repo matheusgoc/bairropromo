@@ -15,6 +15,10 @@ Follow the steps below to set up the app locally after cloning this repo:
 
 1. Set up [Android and iOS environment](https://docs.expo.dev/get-started/set-up-your-environment)
 2. Set the enviroment varialbes at `.env` (follows .env.example)
+
+   > [!NOTE]
+   > `EXPO_PUBLIC_API_BASE_URL=http://localhost:3001` only works on the iOS simulator. On the Android emulator, use `http://10.0.2.2:3001` or run `adb reverse tcp:3001 tcp:3001`. A physical device needs your machine's network IP.
+
 3. Install dependencies:
 
    ```bash
@@ -37,9 +41,10 @@ Follow the steps below to set up the app locally after cloning this repo:
    $ bun ios --device
    ```
 
-   **Notice:**
-   - This last step must be repeated on every native change
-   - The `Run` next following step will execute right after.
+   > [!NOTE]
+   >
+   > - This last step must be repeated on every native change
+   > - The `Run` next following step will execute right after.
 
 ## Run
 

@@ -1,6 +1,6 @@
 import { getAuthToken } from '@/stores/auth.store';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
 
 export class HttpError extends Error {
   constructor(

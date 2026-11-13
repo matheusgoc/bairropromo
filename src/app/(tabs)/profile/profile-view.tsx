@@ -164,15 +164,9 @@ const ProfileView: FC = () => {
     await refetch();
   }, [refetch]);
 
-  const profileId = profile?.id;
   const goToPlacePage = useCallback(() => {
-    if (!profileId) return;
-
-    router.navigate({
-      pathname: '/profile/place/place-list',
-      params: { profile: profileId },
-    });
-  }, [profileId]);
+    router.navigate('/profile/place/place-list');
+  }, []);
 
   useEffect(() => {
     if (!isSignedIn) {

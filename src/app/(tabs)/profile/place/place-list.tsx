@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
-import { FC, memo } from 'react';
+import { router } from 'expo-router';
+import { FC, memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Badge, Divider, List as RNPList } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/ui/empty-state';
 import List from '@/components/ui/list';
@@ -14,44 +13,53 @@ import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
 import useAppTheme from '@/hooks/use-app-theme';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
-import PlaceService from '@/services/place.service';
+import PlaceService, { PlaceServiceFilter } from '@/services/place.service';
 import { DefaultTheme } from '@/types';
 
-const PlaceList: FC = () => {
-  const { profile } = useLocalSearchParams<{ profile: string }>();
+const filter: PlaceServiceFilter = { published: 'all' };
 
+const PlaceList: FC = () => {
   const {
-    data: places,
+    data,
     isPending,
     isRefetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
     refetch,
-  } = useQuery({
-    queryKey: ['places', 'owner', profile],
-    queryFn: () => PlaceService.list(1, { ownerId: profile }),
-    enabled: !!profile,
+  } = useInfiniteQuery({
+    queryKey: ['places', filter],
+    queryFn: ({ pageParam: cursor }) => PlaceService.list(cursor, filter),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
   });
 
-  if (!profile) {
-    return (
-      <SafeAreaView edges={['top', 'left', 'right']}>
-        <EmptyState title="Erro" subtitle="Profile ID não fornecido" />
-      </SafeAreaView>
-    );
-  }
+  const places = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const handleInfiniteScroll = useCallback(() => {
+    if (isFetchingNextPage || !hasNextPage) return;
+    fetchNextPage();
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <View>
       <List
-        data={places?.data ?? []}
-        hasNextPage={false}
+        data={places}
+        hasNextPage={!!hasNextPage}
         keyExtractor={(place: PlaceModel) => place.id}
         renderItem={({ item }: { item: PlaceModel }) => (
-          <PlaceItem place={item} profile={profile} />
+          <PlaceItem place={item} />
         )}
-        onRefresh={refetch}
+        onEndReached={handleInfiniteScroll}
+        onRefresh={handleRefresh}
         isLoading={isPending || isRefetching}
         loading={<LoadingSkeleton />}
-        isEmpty={(places?.data ?? []).length === 0}
+        isEmpty={places.length === 0}
         empty={
           <EmptyState
             title="Nenhum local encontrado"
@@ -65,10 +73,9 @@ const PlaceList: FC = () => {
 
 interface PlaceItemProps {
   place: PlaceModel;
-  profile: string;
 }
 
-const PlaceItem: FC<PlaceItemProps> = memo(({ place, profile }) => {
+const PlaceItem: FC<PlaceItemProps> = memo(({ place }) => {
   const theme = useAppTheme();
   const styles = useStyles(theme);
 

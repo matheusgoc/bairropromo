@@ -100,10 +100,10 @@ const PlaceList: FC = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['places'],
-    queryFn: ({ pageParam }) => PlaceService.list(pageParam),
-    initialPageParam: 1,
+    queryFn: ({ pageParam: cursor }) => PlaceService.list(cursor),
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
   });
 
   const places = data?.pages.flatMap((page) => page.data) ?? [];

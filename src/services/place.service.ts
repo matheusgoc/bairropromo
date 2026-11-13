@@ -2,6 +2,7 @@ import ListModel from '@/models/list.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
 import ProfileModel from '@/models/profile.model';
+import HttpService from '@/services/http.service';
 
 const mockLoaction: PlaceLocationModel = {
   id: '1',
@@ -116,7 +117,7 @@ export interface PlacePayload {
 export type PlaceImageType = 'logo' | 'photo';
 
 export interface PlaceServiceFilter {
-  ownerId?: string;
+  published?: 'all' | boolean; // default true
   position?: {
     lat: number;
     lon: number;
@@ -127,28 +128,23 @@ const statuses = Object.values(PlaceStatus);
 
 const PlaceService = {
   list: async (
-    page: number,
+    cursor?: string,
     filter?: PlaceServiceFilter,
   ): Promise<ListModel<PlaceModel>> => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const params = new URLSearchParams();
+    if (cursor) params.set('cursor', cursor);
+    if (filter?.published !== undefined) {
+      params.set('published', String(filter.published));
+    }
+    if (filter?.position) {
+      params.set('lat', String(filter.position.lat));
+      params.set('lon', String(filter.position.lon));
+    }
 
-    return {
-      data: Array.from({ length: 20 }, (_, i) => ({
-        ...mockPlace,
-        id: `${page}-${i + 1}`,
-        name: `Sample Place ${page}-${i + 1}`,
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        published: Math.random() > 0.5,
-      })),
-      meta: {
-        page: page,
-        take: page * 20,
-        itemCount: 100,
-        pageCount: 5,
-        hasPreviousPage: page > 1,
-        hasNextPage: page * 20 < 100,
-      },
-    };
+    const query = params.toString();
+    return HttpService.get<ListModel<PlaceModel>>(
+      `/places${query ? `?${query}` : ''}`,
+    );
   },
 
   get: async (id: string) => {
