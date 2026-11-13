@@ -1,22 +1,26 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Icon, Text, useTheme } from 'react-native-paper';
+import { Icon, Text } from 'react-native-paper';
 
+import useAppTheme from '@/hooks/use-app-theme';
 import { DefaultTheme } from '@/types';
 
 interface Props {
   title?: string;
   subtitle?: string;
+  icon?: string;
+  /** Rendered below the text, e.g. an action button. */
+  children?: ReactNode;
 }
 
-const EmptyState = ({ title, subtitle }: Props) => {
-  const theme = useTheme();
+const EmptyState = ({ title, subtitle, icon = 'alert', children }: Props) => {
+  const theme = useAppTheme();
   const styles = useStyles(theme);
 
   return useMemo(
     () => (
       <View style={styles.container}>
-        <Icon source="alert" size={50} color={theme.colors.primary} />
+        <Icon source={icon} size={50} color={theme.colors.primary} />
         <Text variant="headlineSmall" style={styles.title}>
           {title ?? 'Sem dados!'}
         </Text>
@@ -25,9 +29,10 @@ const EmptyState = ({ title, subtitle }: Props) => {
             {subtitle}
           </Text>
         )}
+        {children && <View style={styles.actions}>{children}</View>}
       </View>
     ),
-    [styles, theme.colors.primary, title, subtitle],
+    [styles, theme.colors.primary, icon, title, subtitle, children],
   );
 };
 
@@ -49,6 +54,9 @@ const useStyles = (theme: DefaultTheme) =>
       marginTop: 10,
       color: theme.colors.primary,
       textAlign: 'center',
+    },
+    actions: {
+      marginTop: 20,
     },
   });
 

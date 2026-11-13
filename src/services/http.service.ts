@@ -12,6 +12,13 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * React Query `retry` option: retries network/5xx failures up to 3 times,
+ * but never 4xx (404, 403...), since those won't change on retry.
+ */
+export const retryUnlessClientError = (failureCount: number, error: Error) =>
+  !(error instanceof HttpError && error.status < 500) && failureCount < 3;
+
 async function request<T>(
   method: string,
   path: string,

@@ -5,6 +5,7 @@ import { FC, Fragment, memo, useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Card, Divider, Icon, List, Switch, Text } from 'react-native-paper';
 
+import PlaceErrorState from '@/components/ui/place-error-state';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import SubscriptionDialog from '@/components/ui/subscription-dialog';
@@ -13,9 +14,10 @@ import { useSubscription } from '@/hooks/use-subscription';
 import OfferModel from '@/models/offer.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel from '@/models/place.model';
-import { HttpError } from '@/services/http.service';
+import { HttpError, retryUnlessClientError } from '@/services/http.service';
 import OfferService from '@/services/offer.service';
 import PlaceService from '@/services/place.service';
+import ToastService from '@/services/toast.service';
 
 const PlaceView: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,12 +31,14 @@ const PlaceView: FC = () => {
 
   const {
     data: place,
+    error,
     isPending,
     isRefetching,
     refetch,
   } = useQuery({
     queryKey: ['place', id],
     queryFn: () => PlaceService.get(id),
+    retry: retryUnlessClientError,
   });
 
   const apply = useCallback(
@@ -67,14 +71,27 @@ const PlaceView: FC = () => {
   );
 
   const handleRefresh = useCallback(async () => {
-    await refetch();
+    const { isError } = await refetch();
+    // Stale data stays on screen, so let the user know the refresh failed.
+    if (isError) ToastService.error('Erro ao atualizar o local!');
   }, [refetch]);
 
   const styles = useStyles();
 
-  return isPending || !place ? (
-    <LoadingSkeleton />
-  ) : (
+  if (isPending) return <LoadingSkeleton />;
+
+  if (!place) {
+    return (
+      <PlaceErrorState
+        error={error}
+        isRetrying={isRefetching}
+        onRetry={() => refetch()}
+        fallbackHref="/place/place-list"
+      />
+    );
+  }
+
+  return (
     <ScrollView
       refreshControl={
         <RefreshControl onRefresh={handleRefresh} refreshing={isRefetching} />
@@ -104,19 +121,19 @@ const PlaceView: FC = () => {
       />
       <List.Section>
         <List.Subheader>Promoções</List.Subheader>
-        {place.offers?.map((offer, i) => (
+        {place.offers?.map((offer, i, offers) => (
           <View key={offer.id} style={{ marginLeft: 20, marginRight: 5 }}>
             <Offer
               offer={offer}
               isSigned={!!signedPromos.find((sp) => sp === offer.id)}
               onApply={() => apply(offer.id)}
             />
-            {i < place.offers.length - 1 && <Divider />}
+            {i < offers.length - 1 && <Divider />}
           </View>
         ))}
       </List.Section>
       <List.Section>
-        {place.locations.map((location) => (
+        {place.locations?.map((location) => (
           <Location
             key={location.id}
             location={location}
@@ -186,14 +203,14 @@ const Location: FC<{
       titleStyle={{ fontWeight: 'bold' }}
     />
     <Card.Content>
-      {location.offers?.map((offer, i) => (
+      {location.offers?.map((offer, i, offers) => (
         <Fragment key={offer.id}>
           <Offer
             offer={offer}
             isSigned={!!signedPromos.find((sp) => sp === offer.id)}
             onApply={() => onApply(offer.id)}
           />
-          {i < place.offers.length - 1 && <Divider />}
+          {i < offers.length - 1 && <Divider />}
         </Fragment>
       ))}
       <Card style={{ marginBottom: 10 }}>

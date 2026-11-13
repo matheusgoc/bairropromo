@@ -19,6 +19,7 @@ import {
 } from 'react-native-paper';
 
 import Dialog from '@/components/ui/dialog';
+import PlaceErrorState from '@/components/ui/place-error-state';
 import PlaceStatusBadge from '@/components/ui/place-status-badge';
 import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
@@ -27,6 +28,7 @@ import usePlaceImageUpload from '@/hooks/use-place-image-upload';
 import OfferModel from '@/models/offer.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
+import { retryUnlessClientError } from '@/services/http.service';
 import PlaceService from '@/services/place.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
@@ -43,12 +45,14 @@ const PlaceView: FC = () => {
 
   const {
     data: place,
+    error,
     isPending,
     isRefetching,
     refetch,
   } = useQuery({
     queryKey: ['place', id],
     queryFn: () => PlaceService.get(id),
+    retry: retryUnlessClientError,
   });
 
   const handleUploadError = useCallback((e: Error) => {
@@ -86,7 +90,9 @@ const PlaceView: FC = () => {
   });
 
   const handleRefresh = useCallback(async () => {
-    await refetch();
+    const { isError } = await refetch();
+    // Stale data stays on screen, so let the user know the refresh failed.
+    if (isError) ToastService.error('Erro ao atualizar o local!');
   }, [refetch]);
 
   const togglePublished = useCallback(async () => {
@@ -151,9 +157,20 @@ const PlaceView: FC = () => {
 
   const editPhoto = pickPhoto;
 
-  return isPending || !place ? (
-    <LoadingSkeleton />
-  ) : (
+  if (isPending) return <LoadingSkeleton />;
+
+  if (!place) {
+    return (
+      <PlaceErrorState
+        error={error}
+        isRetrying={isRefetching}
+        onRetry={() => refetch()}
+        fallbackHref="/profile/place/place-list"
+      />
+    );
+  }
+
+  return (
     <View style={{ flex: 1 }}>
       <ScrollView
         refreshControl={
@@ -266,10 +283,10 @@ const PlaceView: FC = () => {
         <List.Section>
           <List.Subheader>Promoções</List.Subheader>
           {place.offers?.length ? (
-            place.offers.map((offer, i) => (
+            place.offers.map((offer, i, offers) => (
               <View key={offer.id} style={{ marginLeft: 20, marginRight: 5 }}>
                 <Offer offer={offer} />
-                {i < place.offers.length - 1 && <Divider />}
+                {i < offers.length - 1 && <Divider />}
               </View>
             ))
           ) : (
@@ -278,9 +295,13 @@ const PlaceView: FC = () => {
         </List.Section>
         <List.Section>
           <List.Subheader>Unidades</List.Subheader>
-          {place.locations.map((location) => (
-            <Location key={location.id} location={location} place={place} />
-          ))}
+          {place.locations?.length ? (
+            place.locations.map((location) => (
+              <Location key={location.id} location={location} place={place} />
+            ))
+          ) : (
+            <LocationListEmptyState id={id} />
+          )}
         </List.Section>
         {place.description && (
           <Text variant="bodyMedium" style={{ marginHorizontal: 20 }}>
@@ -419,6 +440,29 @@ const OfferListEmptyState: FC<{ id: string; isLocation?: boolean }> = memo(
 
 OfferListEmptyState.displayName = 'OfferListEmptyState';
 
+const LocationListEmptyState: FC<{ id: string }> = memo(({ id }) => {
+  const addLocation = () => {
+    router.navigate({
+      pathname: '../[id]/location/[locationId]/location-form',
+      params: { id, locationId: 'new' },
+    });
+  };
+  return (
+    <View style={{ alignItems: 'center', gap: 12, paddingVertical: 20 }}>
+      <Text variant="bodyMedium">Nenhuma unidade cadastrada!</Text>
+      <Button
+        mode="contained"
+        icon="map-marker-multiple-outline"
+        onPress={addLocation}
+      >
+        Adicionar Unidade
+      </Button>
+    </View>
+  );
+});
+
+LocationListEmptyState.displayName = 'LocationListEmptyState';
+
 const Offer: FC<{ offer: OfferModel }> = memo(({ offer }) => (
   <List.Item
     title={offer.title}
@@ -438,10 +482,10 @@ const Location: FC<{ location: PlaceLocationModel; place: PlaceModel }> = memo(
         titleStyle={{ fontWeight: 'bold' }}
       />
       <Card.Content>
-        {location.offers?.map((offer, i) => (
+        {location.offers?.map((offer, i, offers) => (
           <Fragment key={offer.id}>
             <Offer offer={offer} />
-            {i < place.offers.length - 1 && <Divider />}
+            {i < offers.length - 1 && <Divider />}
           </Fragment>
         ))}
         <Card style={{ marginBottom: 10 }}>
