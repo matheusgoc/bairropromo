@@ -46,6 +46,18 @@ export interface PlaceServiceFilter {
   };
 }
 
+/**
+ * Leaves blank optional fields out of the request body: the API rejects
+ * empty strings on update (`FIELD_EMPTY`), and `undefined` keys are dropped
+ * by `JSON.stringify`.
+ */
+const toPlaceBody = (data: PlacePayload): PlacePayload => ({
+  name: data.name.trim(),
+  category: data.category?.trim() || undefined,
+  description: data.description?.trim() || undefined,
+  website: data.website?.trim() || undefined,
+});
+
 const PlaceService = {
   list: async (
     cursor?: string,
@@ -70,13 +82,14 @@ const PlaceService = {
   get: async (id: string): Promise<PlaceModel> =>
     HttpService.get<PlaceModel>(`/places/${encodeURIComponent(id)}`),
 
-  add: async (data: PlacePayload) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  add: async (data: PlacePayload): Promise<PlaceModel> =>
+    HttpService.post<PlaceModel>('/places', toPlaceBody(data)),
 
-  update: async (id: string, data: PlacePayload) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  update: async (id: string, data: PlacePayload): Promise<PlaceModel> =>
+    HttpService.put<PlaceModel>(
+      `/places/${encodeURIComponent(id)}`,
+      toPlaceBody(data),
+    ),
 
   publish: async (id: string): Promise<void> =>
     HttpService.patch<void>(`/places/${encodeURIComponent(id)}/publish`),
