@@ -78,13 +78,11 @@ const PlaceService = {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
-  publish: async (id: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  publish: async (id: string): Promise<void> =>
+    HttpService.patch<void>(`/places/${encodeURIComponent(id)}/publish`),
 
-  unpublish: async (id: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  unpublish: async (id: string): Promise<void> =>
+    HttpService.patch<void>(`/places/${encodeURIComponent(id)}/unpublish`),
 
   searchOwner: async (email: string): Promise<ProfileModel | null> => {
     await new Promise((resolve) => setTimeout(resolve, 1500));

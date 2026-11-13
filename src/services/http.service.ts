@@ -6,9 +6,16 @@ export class HttpError extends Error {
   constructor(
     public status: number,
     message: string,
+    public body?: unknown,
   ) {
     super(message);
     this.name = 'HttpError';
+  }
+
+  /** `code` attribute of the error payload, when the API sends one. */
+  get code(): string | undefined {
+    const code = (this.body as { code?: unknown } | null | undefined)?.code;
+    return typeof code === 'string' ? code : undefined;
   }
 }
 
@@ -36,15 +43,27 @@ async function request<T>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (!res.ok) throw new HttpError(res.status, `HTTP ${res.status}`);
+  // Action endpoints (e.g. publish) may answer 204 / an empty body.
+  const text = await res.text();
 
-  return res.json() as Promise<T>;
+  if (!res.ok) {
+    let body: unknown = text || undefined;
+    try {
+      body = text ? JSON.parse(text) : undefined;
+    } catch {
+      // Non-JSON error payload: keep the raw text.
+    }
+    throw new HttpError(res.status, `HTTP ${res.status}`, body);
+  }
+
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 const HttpService = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
+  patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
   delete: <T>(path: string) => request<T>('DELETE', path),
 };
 

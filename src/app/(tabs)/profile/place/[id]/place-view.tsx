@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Burnt from 'burnt';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -28,7 +28,7 @@ import usePlaceImageUpload from '@/hooks/use-place-image-upload';
 import OfferModel from '@/models/offer.model';
 import PlaceLocationModel from '@/models/place-location.model';
 import PlaceModel, { PlaceStatus } from '@/models/place.model';
-import { retryUnlessClientError } from '@/services/http.service';
+import { HttpError, retryUnlessClientError } from '@/services/http.service';
 import PlaceService from '@/services/place.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
@@ -38,10 +38,13 @@ const PlaceView: FC = () => {
   const styles = useStyles(colors);
 
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
   const [fabOpen, setFabOpen] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
+  const [notApprovedDialogVisible, setNotApprovedDialogVisible] =
+    useState(false);
 
   const {
     data: place,
@@ -106,14 +109,23 @@ const PlaceView: FC = () => {
         await PlaceService.publish(id);
         Burnt.toast({ title: 'Local publicado!' });
       }
-      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['places'] });
+      await queryClient.invalidateQueries({ queryKey: ['place', id] });
       setIsToggling(false);
     } catch (e) {
-      ToastService.error('Erro ao atualizar publicação!');
       setIsToggling(false);
+      if (
+        e instanceof HttpError &&
+        e.status === 400 &&
+        e.code === 'PLACE_NOT_APPROVED'
+      ) {
+        setNotApprovedDialogVisible(true);
+        return;
+      }
+      ToastService.error('Erro ao atualizar publicação!');
       console.error(e);
     }
-  }, [place, refetch, id]);
+  }, [place, queryClient, id]);
 
   const handleTogglePublished = useCallback(() => {
     setConfirmDialogVisible(true);
@@ -370,6 +382,20 @@ const PlaceView: FC = () => {
               setConfirmDialogVisible(false);
               togglePublished();
             },
+          },
+        ]}
+      />
+      <Dialog
+        visible={notApprovedDialogVisible}
+        onDismiss={() => setNotApprovedDialogVisible(false)}
+        title="Local em análise"
+        mode="danger"
+        message={`As alterações de ${place.name} estão em análise e precisam ser aprovadas antes de ser publicado.`}
+        actions={[
+          {
+            label: 'Entendi',
+            isPrimary: true,
+            callback: () => setNotApprovedDialogVisible(false),
           },
         ]}
       />
