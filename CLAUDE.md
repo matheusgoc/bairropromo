@@ -95,6 +95,7 @@ Nine-screen sequence shown only on first launch:
 Thin business-logic layer consumed by React Query hooks:
 
 - `place.service.ts`, `offer.service.ts`, `location.service.ts` — CRUD for business entities
+- `category.service.ts` — place categories from the API (`GET /categories`)
 - `profile.service.ts` — user profile
 - `alert.service.ts`, `toast.service.ts` — native UI helpers
 
