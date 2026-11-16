@@ -13,8 +13,8 @@ interface PlaceLocationModel {
   state: string;
   address: string;
   postalCode: string;
-  lat?: string;
-  lon?: string;
+  lat?: number;
+  lon?: number;
   phone?: string;
   isWhatsapp?: boolean;
   email?: string;

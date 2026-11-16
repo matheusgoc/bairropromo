@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FC, memo, useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/empty-state';
 import List from '@/components/ui/list';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import PlaceLocationModel from '@/models/place-location.model';
+import { retryUnlessClientError } from '@/services/http.service';
 import LocationService from '@/services/location.service';
 
 interface LocationProps {
@@ -42,28 +43,13 @@ Location.displayName = 'Location';
 const LocationList: FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const {
-    data,
-    isPending,
-    isRefetching,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    refetch,
-  } = useInfiniteQuery({
+  const { data, isPending, isRefetching, refetch } = useQuery({
     queryKey: ['locations', id],
-    queryFn: ({ pageParam }) => LocationService.list(pageParam, id),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) =>
-      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+    queryFn: () => LocationService.list(id),
+    retry: retryUnlessClientError,
   });
 
-  const locations = data?.pages.flatMap((page) => page.data) ?? [];
-
-  const handleInfiniteScroll = useCallback(() => {
-    if (isFetchingNextPage || !hasNextPage) return;
-    fetchNextPage();
-  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
+  const locations = data ?? [];
 
   const handleRefresh = useCallback(async () => {
     await refetch();
@@ -72,12 +58,11 @@ const LocationList: FC = () => {
   return (
     <List
       data={locations}
-      hasNextPage={!!hasNextPage}
+      hasNextPage={false}
       keyExtractor={(location) => location.id}
       renderItem={({ item }: { item: PlaceLocationModel }) => (
         <Location location={item} placeId={id} />
       )}
-      onEndReached={handleInfiniteScroll}
       onRefresh={handleRefresh}
       isLoading={isPending || isRefetching}
       loading={<LoadingSkeleton />}

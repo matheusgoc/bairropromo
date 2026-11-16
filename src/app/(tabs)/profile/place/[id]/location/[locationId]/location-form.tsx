@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { Control, FieldPath, useForm, useWatch } from 'react-hook-form';
 import { StyleProp, StyleSheet, TextStyle, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -14,6 +14,7 @@ import TextInput from '@/components/form/text-input';
 import Dialog from '@/components/ui/dialog';
 import { BRAZIL_STATES } from '@/constants';
 import useAppTheme from '@/hooks/use-app-theme';
+import { retryUnlessClientError } from '@/services/http.service';
 import LocationService, { LocationPayload } from '@/services/location.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
@@ -149,7 +150,17 @@ const LocationForm: FC = () => {
     queryKey: ['location', id, locationId],
     queryFn: () => LocationService.get(id, locationId),
     enabled: !isNew,
+    retry: retryUnlessClientError,
   });
+
+  // Locations come from the place preview, and every location mutation sends
+  // the place back to review, so the place and the place lists are stale too.
+  const invalidatePlaceQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['locations', id] });
+    queryClient.invalidateQueries({ queryKey: ['place', id] });
+    // Prefix match: covers the public ['places'] and profile ['places', filter] lists.
+    queryClient.invalidateQueries({ queryKey: ['places'] });
+  }, [id, queryClient]);
 
   const { control, handleSubmit, reset } = useForm<LocationFormValues>({
     mode: 'onChange',
@@ -203,9 +214,21 @@ const LocationForm: FC = () => {
         ? LocationService.add(id, data)
         : LocationService.update(id, locationId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['locations', id] });
+      invalidatePlaceQueries();
+      // Mark stale without refetching now: the form is closing, and the next
+      // open would otherwise show cached data for up to `staleTime`.
+      queryClient.invalidateQueries({
+        queryKey: ['location', id, locationId],
+        refetchType: 'none',
+      });
       ToastService.success(`Unidade ${isNew ? 'adicionada' : 'atualizada'}!`);
       router.back();
+    },
+    onError: (e) => {
+      ToastService.error(
+        `Erro ao ${isNew ? 'adicionar' : 'atualizar'} unidade!`,
+      );
+      console.error(e);
     },
   });
 
@@ -214,9 +237,13 @@ const LocationForm: FC = () => {
   const { mutate: removeLocation, isPending: isRemoving } = useMutation({
     mutationFn: () => LocationService.remove(id, locationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['locations', id] });
+      invalidatePlaceQueries();
       ToastService.success('Unidade removida!');
       router.back();
+    },
+    onError: (e) => {
+      ToastService.error('Erro ao remover unidade!');
+      console.error(e);
     },
   });
 

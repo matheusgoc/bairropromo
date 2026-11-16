@@ -1,5 +1,6 @@
-import ListModel from '@/models/list.model';
+import PlaceModel from '@/models/place.model';
 import PlaceLocationModel from '@/models/place-location.model';
+import HttpService from '@/services/http.service';
 
 export interface LocationPayload {
   name: string;
@@ -13,108 +14,49 @@ export interface LocationPayload {
   workingHours: { weekDay: string; start: string; end: string }[];
 }
 
-const mockCities: { city: string; state: string }[] = [
-  { city: 'São José do Vale do Rio Preto', state: 'MG' },
-  { city: 'Belo Horizonte', state: 'MG' },
-  { city: 'Uberlândia', state: 'MG' },
-  { city: 'Araguari', state: 'MG' },
-  { city: 'São Paulo', state: 'SP' },
-  { city: 'Rio de Janeiro', state: 'RJ' },
-];
+const placePath = (placeId: string) => `/places/${encodeURIComponent(placeId)}`;
 
-const mockLocationNames = [
-  'Centro',
-  'Ponte Nova',
-  'Bom Jardim',
-  'Shopping',
-  'Norte',
-  'Sul',
-  'Leste',
-  'Oeste',
-  'Aeroporto',
-  'Universitário',
-];
+const locationsPath = (placeId: string, locationId?: string) =>
+  `${placePath(placeId)}/locations${
+    locationId ? `/${encodeURIComponent(locationId)}` : ''
+  }`;
 
 const LocationService = {
-  list: async (
-    page: number,
-    placeId: string,
-  ): Promise<ListModel<PlaceLocationModel>> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    return {
-      data: Array.from({ length: 20 }, (_, i) => {
-        const idx = (page - 1) * 20 + i;
-        const { city, state } = mockCities[idx % mockCities.length];
-        return {
-          id: ((page - 1) * 20 + i + 1).toString(),
-          name: mockLocationNames[idx % mockLocationNames.length],
-          city,
-          state,
-          address: `Rua Fictícia, ${idx + 1}`,
-          postalCode: '70070-600',
-          phone: `61 9${String(idx).padStart(4, '0')}-9999`,
-          isWhatsapp: Math.random() > 0.5,
-          workingHours: [
-            { weekDay: 'Segunda', start: '09:00', end: '18:00' },
-            { weekDay: 'Terça', start: '09:00', end: '18:00' },
-            { weekDay: 'Quarta', start: '09:00', end: '18:00' },
-            { weekDay: 'Quinta', start: '09:00', end: '18:00' },
-            { weekDay: 'Sexta', start: '09:00', end: '18:00' },
-          ],
-        };
-      }),
-      meta: {
-        page,
-        take: page * 20,
-        itemCount: 100,
-        pageCount: 5,
-        hasPreviousPage: page > 1,
-        hasNextPage: page * 20 < 100,
-      },
-    };
+  /**
+   * Locations aren't paginated: they come in the place preview's
+   * `locations` attribute (soft-deleted ones left out).
+   */
+  list: async (placeId: string): Promise<PlaceLocationModel[]> => {
+    const { locations } = await HttpService.get<PlaceModel>(placePath(placeId));
+    return locations ?? [];
   },
 
   get: async (
     placeId: string,
     locationId: string,
-  ): Promise<PlaceLocationModel> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+  ): Promise<PlaceLocationModel> =>
+    HttpService.get<PlaceLocationModel>(locationsPath(placeId, locationId)),
 
-    return {
-      id: locationId,
-      name: 'Centro',
-      city: 'São José do Vale do Rio Preto',
-      state: 'MG',
-      address: 'Rua Fictícia, 1',
-      postalCode: '70070-600',
-      phone: '61 99999-9999',
-      isWhatsapp: true,
-      workingHours: [
-        { weekDay: 'Segunda', start: '09:00', end: '18:00' },
-        { weekDay: 'Terça', start: '09:00', end: '18:00' },
-        { weekDay: 'Quarta', start: '09:00', end: '18:00' },
-        { weekDay: 'Quinta', start: '09:00', end: '18:00' },
-        { weekDay: 'Sexta', start: '09:00', end: '18:00' },
-      ],
-    };
-  },
+  add: async (
+    placeId: string,
+    location: LocationPayload,
+  ): Promise<PlaceLocationModel> =>
+    HttpService.post<PlaceLocationModel>(locationsPath(placeId), location),
 
-  add: async (placeId: string, location: LocationPayload): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
-
+  /** Full replacement: omitted optional fields are cleared by the API. */
   update: async (
     placeId: string,
     locationId: string,
     location: LocationPayload,
-  ): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  ): Promise<PlaceLocationModel> =>
+    HttpService.put<PlaceLocationModel>(
+      locationsPath(placeId, locationId),
+      location,
+    ),
 
-  remove: async (placeId: string, locationId: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  /** Soft delete on the API side. */
+  remove: async (placeId: string, locationId: string): Promise<void> =>
+    HttpService.delete<void>(locationsPath(placeId, locationId)),
 };
 
 export default LocationService;

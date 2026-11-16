@@ -44,13 +44,12 @@ const OfferForm: FC = () => {
 
   const { data: locationsData } = useQuery({
     queryKey: ['locations', id],
-    queryFn: () => LocationService.list(1, id),
+    queryFn: () => LocationService.list(id),
   });
 
   const locationOptions: SelectOption[] = [
     NONE_OPTION,
-    ...(locationsData?.data.map((loc) => ({ id: loc.id, name: loc.name })) ??
-      []),
+    ...(locationsData?.map((loc) => ({ id: loc.id, name: loc.name })) ?? []),
   ];
 
   const { control, handleSubmit, reset } = useForm<OfferFormValues>({
