@@ -110,7 +110,11 @@ const PlaceItem: FC<PlaceItemProps> = memo(({ place }) => {
             alt={`Logo de ${place.name}`}
           />
         ) : (
-          <Avatar.Text size={50} label={extractInitials(place.name)} />
+          <Avatar.Text
+            size={50}
+            label={extractInitials(place.name)}
+            style={styles.logo}
+          />
         )
       }
       right={() => (
