@@ -25,6 +25,7 @@ interface PlaceModel {
   status: PlaceStatus;
   reason: string;
   published: boolean;
+  activeOffers?: string[];
 }
 
 export default PlaceModel;
