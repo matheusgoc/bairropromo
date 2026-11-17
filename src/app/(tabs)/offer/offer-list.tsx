@@ -153,10 +153,10 @@ const OfferList: FC = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['offers'],
-    queryFn: ({ pageParam }) => OfferService.list(pageParam),
-    initialPageParam: 1,
+    queryFn: ({ pageParam: cursor }) => OfferService.listAssigned(cursor),
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
   });
 
   const offers = data?.pages.flatMap((page) => page.data) ?? [];

@@ -35,6 +35,7 @@ type SelectInputProps<
   label: string;
   options: Option[];
   style?: StyleProp<TextStyle>;
+  disabled?: boolean;
 };
 
 const SelectInput = <
@@ -47,6 +48,7 @@ const SelectInput = <
   label,
   options,
   style,
+  disabled,
 }: SelectInputProps<TFieldValues, TName>) => {
   const [visible, setVisible] = useState(false);
   const theme = useTheme();
@@ -61,13 +63,17 @@ const SelectInput = <
 
         return (
           <View>
-            <TouchableRipple onPress={() => setVisible(true)}>
+            <TouchableRipple
+              onPress={() => setVisible(true)}
+              disabled={disabled}
+            >
               <View pointerEvents="none">
                 <PaperTextInput
                   mode="outlined"
                   label={label}
                   value={selectedLabel}
                   editable={false}
+                  disabled={disabled}
                   right={<PaperTextInput.Icon icon="chevron-down" />}
                   error={!!error}
                   style={style}

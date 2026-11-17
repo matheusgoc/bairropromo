@@ -1,38 +1,64 @@
 import ListModel from '@/models/list.model';
 import OfferModel from '@/models/offer.model';
+import HttpService from '@/services/http.service';
 
 export interface OfferPayload {
   title: string;
+  discount?: number;
+  /** ISO 8601 date-time with a timezone offset, e.g. 2026-10-31T23:59:59-03:00 */
   start?: string;
+  /** ISO 8601 date-time with a timezone offset; must be after `start`. */
   end?: string;
+  /** Sent as the `?location=` query param on add only: the API fixes it at creation. */
   locationId?: string;
 }
 
+const PAGE_SIZE = 20;
+
+const offersPath = (placeId: string, offerId?: string) =>
+  `/places/${encodeURIComponent(placeId)}/offers${
+    offerId ? `/${encodeURIComponent(offerId)}` : ''
+  }`;
+
+const MOCK_PAGE_COUNT = 5;
+
 const OfferService = {
+  /** The place's offers, every status, newest first (owner/admin only). */
   list: async (
-    page: number,
-    placeId?: string, // passed for profile offer list only
+    placeId: string,
+    cursor?: string,
   ): Promise<ListModel<OfferModel>> => {
+    const params = new URLSearchParams({ take: String(PAGE_SIZE) });
+    if (cursor) params.set('cursor', cursor);
+    return HttpService.get<ListModel<OfferModel>>(
+      `${offersPath(placeId)}?${params.toString()}`,
+    );
+  },
+
+  /**
+   * Mock: the customer's assigned offers. No API endpoint yet; the cursor is a
+   * stringified page number.
+   */
+  listAssigned: async (cursor?: string): Promise<ListModel<OfferModel>> => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // profile offer list has no used status offer
-    const status = placeId
-      ? ['expired', 'canceled'][Math.floor(Math.random() * 2)]
-      : ['used', 'expired', 'canceled'][Math.floor(Math.random() * 3)];
+    const page = Number(cursor ?? 1);
+    const status = ['used', 'expired', 'canceled'][
+      Math.floor(Math.random() * 3)
+    ];
 
     return {
-      data: Array.from({ length: 20 }, (_, i) => ({
-        id: ((page - 1) * 20 + i + 1).toString(),
-        title: `Offer ${(page - 1) * 20 + i + 1} - Nulla congue nulla ligula, a porttitor erat tempus nec. Integer vel  vulputate, consectetur nisi sit amet, tellus`,
-        description: `Description for offer ${(page - 1) * 20 + i + 1}`,
+      data: Array.from({ length: PAGE_SIZE }, (_, i) => ({
+        id: ((page - 1) * PAGE_SIZE + i + 1).toString(),
+        title: `Offer ${(page - 1) * PAGE_SIZE + i + 1} - Nulla congue nulla ligula, a porttitor erat tempus nec. Integer vel  vulputate, consectetur nisi sit amet, tellus`,
         discount: 10 + i,
         start: new Date().toISOString(),
         end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         status: page > 1 ? (status as OfferModel['status']) : 'active',
         place: {
-          id: placeId ?? (i + 1).toString(),
-          name: placeId ? `Place ${placeId}` : `Place ${i + 1}`,
-          logo: ['https://picsum.photos/200/300', undefined, 'expired'][
+          id: (i + 1).toString(),
+          name: `Place ${i + 1}`,
+          logo: ['https://picsum.photos/200/300', undefined][
             Math.floor(Math.random() * 2)
           ],
         },
@@ -52,12 +78,10 @@ const OfferService = {
               },
       })),
       meta: {
-        page: page,
-        take: page * 20,
-        itemCount: 100,
-        pageCount: 5,
+        take: PAGE_SIZE,
         hasPreviousPage: page > 1,
-        hasNextPage: page * 20 < 100,
+        hasNextPage: page < MOCK_PAGE_COUNT,
+        nextCursor: page < MOCK_PAGE_COUNT ? String(page + 1) : null,
       },
     };
   },
@@ -102,37 +126,38 @@ const OfferService = {
     // Logic to unassign an offer from a user
   },
 
-  get: async (placeId: string, offerId: string): Promise<OfferModel> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+  get: async (placeId: string, offerId: string): Promise<OfferModel> =>
+    HttpService.get<OfferModel>(offersPath(placeId, offerId)),
 
-    return {
-      id: offerId,
-      title: 'Oferta de exemplo',
-      start: new Date().toISOString(),
-      end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'active',
-    };
+  add: async (placeId: string, data: OfferPayload): Promise<OfferModel> => {
+    const { locationId, ...body } = data;
+    const query = locationId
+      ? `?location=${encodeURIComponent(locationId)}`
+      : '';
+    return HttpService.post<OfferModel>(`${offersPath(placeId)}${query}`, body);
   },
 
-  add: async (placeId: string, data: OfferPayload): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
-
+  /** Full replacement of title/discount/start/end; the location can't change. */
   update: async (
     placeId: string,
     offerId: string,
     data: OfferPayload,
-  ): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  ): Promise<OfferModel> => {
+    const { locationId: _locationId, ...body } = data;
+    return HttpService.put<OfferModel>(offersPath(placeId, offerId), body);
   },
 
-  disable: async (placeId: string, offerId: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  /** Cancels the offer (the API never deletes offers). */
+  disable: async (placeId: string, offerId: string): Promise<OfferModel> =>
+    HttpService.delete<OfferModel>(offersPath(placeId, offerId)),
 
-  enable: async (placeId: string, offerId: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  },
+  /**
+   * Reactivates a canceled offer; its other fields are left untouched. The API
+   * derives `expired` from `end`, so an offer whose end has passed comes back
+   * expired.
+   */
+  enable: async (placeId: string, offerId: string): Promise<OfferModel> =>
+    HttpService.patch<OfferModel>(offersPath(placeId, offerId)),
 };
 
 export default OfferService;

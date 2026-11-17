@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,13 +11,29 @@ import SelectInput, { SelectOption } from '@/components/form/select-input';
 import TextInput from '@/components/form/text-input';
 import Dialog from '@/components/ui/dialog';
 import { DATETIME_MASK } from '@/constants';
+import { isoToMaskedDateTime, maskedToIsoDateTime } from '@/helpers';
 import useAppTheme from '@/hooks/use-app-theme';
+import { retryUnlessClientError } from '@/services/http.service';
 import LocationService from '@/services/location.service';
 import OfferService, { OfferPayload } from '@/services/offer.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
 
 const NONE_OPTION: SelectOption = { id: '', name: 'Todas' };
+
+// Empty is fine (the date is optional); a filled date must be complete and real.
+const validateDateTime = (value: string) =>
+  !value || !!maskedToIsoDateTime(value) || 'Data inválida';
+
+const validateEnd = (value: string, values: OfferFormValues) => {
+  const valid = validateDateTime(value);
+  if (valid !== true) return valid;
+  const start = maskedToIsoDateTime(values.start);
+  const end = maskedToIsoDateTime(value);
+  return !start || !end || dayjs(end).isAfter(start)
+    ? true
+    : 'Término deve ser após o início';
+};
 
 interface OfferFormValues {
   title: string;
@@ -40,6 +57,7 @@ const OfferForm: FC = () => {
     queryKey: ['offer', id, offerId],
     queryFn: () => OfferService.get(id, offerId),
     enabled: !isNew,
+    retry: retryUnlessClientError,
   });
 
   const { data: locationsData } = useQuery({
@@ -66,12 +84,24 @@ const OfferForm: FC = () => {
     if (offer) {
       reset({
         title: offer.title,
-        start: offer.start ?? '',
-        end: offer.end ?? '',
+        start: isoToMaskedDateTime(offer.start),
+        end: isoToMaskedDateTime(offer.end),
         locationId: offer.location?.id ?? '',
       });
     }
   }, [offer, reset]);
+
+  // Both place views render the place's and its locations' visible offers.
+  const invalidateOfferQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['offers', id] });
+    queryClient.invalidateQueries({ queryKey: ['place', id] });
+    // Mark stale without refetching now: the form is closing, and the next
+    // open would otherwise show cached data for up to `staleTime`.
+    queryClient.invalidateQueries({
+      queryKey: ['offer', id, offerId],
+      refetchType: 'none',
+    });
+  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: OfferPayload) =>
@@ -79,9 +109,15 @@ const OfferForm: FC = () => {
         ? OfferService.add(id, data)
         : OfferService.update(id, offerId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers', id] });
+      invalidateOfferQueries();
       ToastService.success(`Oferta ${isNew ? 'adicionada' : 'atualizada'}!`);
       router.back();
+    },
+    onError: (e) => {
+      ToastService.error(
+        `Erro ao ${isNew ? 'adicionar' : 'atualizar'} oferta!`,
+      );
+      console.error(e);
     },
   });
 
@@ -94,10 +130,25 @@ const OfferForm: FC = () => {
       isActive
         ? OfferService.disable(id, offerId)
         : OfferService.enable(id, offerId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offers', id] });
-      ToastService.success(isActive ? 'Oferta desativada!' : 'Oferta ativada!');
+    onSuccess: (saved) => {
+      invalidateOfferQueries();
+      if (saved.status === 'expired') {
+        ToastService.warn(
+          'Oferta expirada!',
+          'Altere a data de término para reativá-la.',
+        );
+      } else {
+        ToastService.success(
+          isActive ? 'Oferta desativada!' : 'Oferta ativada!',
+        );
+      }
       router.back();
+    },
+    onError: (e) => {
+      ToastService.error(
+        `Erro ao ${isActive ? 'desativar' : 'ativar'} oferta!`,
+      );
+      console.error(e);
     },
   });
 
@@ -113,9 +164,10 @@ const OfferForm: FC = () => {
     (data) => {
       const payload: OfferPayload = {
         title: data.title,
-        start: data.start || undefined,
-        end: data.end || undefined,
-        locationId: data.locationId || undefined,
+        start: maskedToIsoDateTime(data.start),
+        end: maskedToIsoDateTime(data.end),
+        // The API fixes the location at creation; update ignores it.
+        locationId: (isNew && data.locationId) || undefined,
       };
       mutate(payload);
     },
@@ -139,6 +191,7 @@ const OfferForm: FC = () => {
       <TextInput
         name="start"
         control={control}
+        rules={{ validate: validateDateTime, deps: ['end'] }}
         mask={DATETIME_MASK}
         label="Início"
         placeholder="DD/MM/AAAA HH:MM"
@@ -148,6 +201,7 @@ const OfferForm: FC = () => {
       <TextInput
         name="end"
         control={control}
+        rules={{ validate: validateEnd }}
         mask={DATETIME_MASK}
         label="Término"
         placeholder="DD/MM/AAAA HH:MM"
@@ -159,6 +213,7 @@ const OfferForm: FC = () => {
         control={control}
         label="Unidade"
         options={locationOptions}
+        disabled={!isNew}
         style={styles.input}
       />
 

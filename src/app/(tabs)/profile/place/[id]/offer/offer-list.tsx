@@ -20,6 +20,7 @@ import SkeletonCircle from '@/components/ui/skeleton/skeleton-circle';
 import SkeletonText from '@/components/ui/skeleton/skeleton-text';
 import { extractInitials } from '@/helpers';
 import OfferModel from '@/models/offer.model';
+import { retryUnlessClientError } from '@/services/http.service';
 import OfferService from '@/services/offer.service';
 
 interface OfferProps {
@@ -138,10 +139,11 @@ const OfferList: FC = () => {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['offers', id],
-    queryFn: ({ pageParam }) => OfferService.list(pageParam, id),
-    initialPageParam: 1,
+    queryFn: ({ pageParam: cursor }) => OfferService.list(id, cursor),
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
+    retry: retryUnlessClientError,
   });
 
   const offers = data?.pages.flatMap((page) => page.data) ?? [];
