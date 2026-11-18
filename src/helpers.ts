@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
 
-dayjs.extend(customParseFormat);
+import type { TimeOfDay } from '@/types';
 
 export function extractInitials(name?: string) {
   if (!name?.trim()) {
@@ -17,21 +16,29 @@ export function extractInitials(name?: string) {
   return names[0][0].toUpperCase() + names[names.length - 1][0].toUpperCase();
 }
 
-/** Raw value stored by a `DATETIME_MASK` input (the mask keeps only digits). */
-const MASKED_DATETIME_FORMAT = 'DDMMYYYYHHmm';
-
-/**
- * `DATETIME_MASK` input value → ISO 8601 with the device's offset
- * (e.g. `2026-11-16T18:30:00-03:00`), as the API requires.
- * `undefined` when empty, incomplete or not a real date (e.g. 31/02).
- */
-export function maskedToIsoDateTime(value?: string): string | undefined {
-  if (!value) return undefined;
-  const date = dayjs(value, MASKED_DATETIME_FORMAT, true);
-  return date.isValid() ? date.format() : undefined;
+/** `date` with its time-of-day replaced by `time` (milliseconds zeroed). */
+export function withTime(date: Date, { hours, minutes, seconds }: TimeOfDay) {
+  return dayjs(date)
+    .hour(hours)
+    .minute(minutes)
+    .second(seconds)
+    .millisecond(0)
+    .toDate();
 }
 
-/** ISO 8601 date-time → `DATETIME_MASK` input value (local time). */
-export function isoToMaskedDateTime(iso?: string): string {
-  return iso ? dayjs(iso).format(MASKED_DATETIME_FORMAT) : '';
+/** The time-of-day of `date`. */
+export function timeOf(date: Date): TimeOfDay {
+  return {
+    hours: date.getHours(),
+    minutes: date.getMinutes(),
+    seconds: date.getSeconds(),
+  };
+}
+
+/**
+ * ISO 8601 with the device's offset (e.g. `2026-11-16T18:30:00-03:00`), as
+ * the API requires. `undefined` when there is no date.
+ */
+export function toIsoDateTime(date?: Date | null): string | undefined {
+  return date ? dayjs(date).format() : undefined;
 }

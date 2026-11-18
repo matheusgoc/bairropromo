@@ -1,3 +1,5 @@
+import type { TimeOfDay } from '@/types';
+
 export const BRAZIL_STATES = [
   { id: 'AC', name: 'AC - Acre' },
   { id: 'AL', name: 'AL - Alagoas' },
@@ -41,21 +43,8 @@ export const DATE_MASK = [
   /\d/,
 ];
 
-export const DATETIME_MASK = [
-  /\d/,
-  /\d/,
-  '/',
-  /\d/,
-  /\d/,
-  '/',
-  /\d/,
-  /\d/,
-  /\d/,
-  /\d/,
-  ' ',
-  /\d/,
-  /\d/,
-  ':',
-  /\d/,
-  /\d/,
-];
+/** Time-of-day applied to an offer's start when the user picks no time. */
+export const START_OF_DAY: TimeOfDay = { hours: 0, minutes: 0, seconds: 0 };
+
+/** Time-of-day applied to an offer's end when the user picks no time. */
+export const END_OF_DAY: TimeOfDay = { hours: 23, minutes: 59, seconds: 59 };

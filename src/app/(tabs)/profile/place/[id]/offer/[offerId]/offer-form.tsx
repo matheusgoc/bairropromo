@@ -2,16 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FC, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { ActivityIndicator, Button } from 'react-native-paper';
 
+import DateTimeInput from '@/components/form/date-time-input';
 import SelectInput, { SelectOption } from '@/components/form/select-input';
 import TextInput from '@/components/form/text-input';
 import Dialog from '@/components/ui/dialog';
-import { DATETIME_MASK } from '@/constants';
-import { isoToMaskedDateTime, maskedToIsoDateTime } from '@/helpers';
+import { END_OF_DAY, START_OF_DAY } from '@/constants';
+import { toIsoDateTime } from '@/helpers';
 import useAppTheme from '@/hooks/use-app-theme';
 import { retryUnlessClientError } from '@/services/http.service';
 import LocationService from '@/services/location.service';
@@ -21,24 +22,17 @@ import { DefaultTheme } from '@/types';
 
 const NONE_OPTION: SelectOption = { id: '', name: 'Todas' };
 
-// Empty is fine (the date is optional); a filled date must be complete and real.
-const validateDateTime = (value: string) =>
-  !value || !!maskedToIsoDateTime(value) || 'Data inválida';
-
-const validateEnd = (value: string, values: OfferFormValues) => {
-  const valid = validateDateTime(value);
-  if (valid !== true) return valid;
-  const start = maskedToIsoDateTime(values.start);
-  const end = maskedToIsoDateTime(value);
-  return !start || !end || dayjs(end).isAfter(start)
-    ? true
-    : 'Término deve ser após o início';
-};
+// Both dates are optional; when both are set the end must come after the start.
+const validateEnd = (end: Date | null, values: OfferFormValues) =>
+  !end ||
+  !values.start ||
+  dayjs(end).isAfter(values.start) ||
+  'Término deve ser após o início';
 
 interface OfferFormValues {
   title: string;
-  start: string;
-  end: string;
+  start: Date | null;
+  end: Date | null;
   locationId: string;
 }
 
@@ -74,18 +68,21 @@ const OfferForm: FC = () => {
     mode: 'onChange',
     defaultValues: {
       title: '',
-      start: '',
-      end: '',
+      start: null,
+      end: null,
       locationId: '',
     },
   });
+
+  // Each date bounds the other's calendar.
+  const [start, end] = useWatch({ control, name: ['start', 'end'] });
 
   useEffect(() => {
     if (offer) {
       reset({
         title: offer.title,
-        start: isoToMaskedDateTime(offer.start),
-        end: isoToMaskedDateTime(offer.end),
+        start: offer.start ? new Date(offer.start) : null,
+        end: offer.end ? new Date(offer.end) : null,
         locationId: offer.location?.id ?? '',
       });
     }
@@ -164,8 +161,8 @@ const OfferForm: FC = () => {
     (data) => {
       const payload: OfferPayload = {
         title: data.title,
-        start: maskedToIsoDateTime(data.start),
-        end: maskedToIsoDateTime(data.end),
+        start: toIsoDateTime(data.start),
+        end: toIsoDateTime(data.end),
         // The API fixes the location at creation; update ignores it.
         locationId: (isNew && data.locationId) || undefined,
       };
@@ -188,24 +185,22 @@ const OfferForm: FC = () => {
         numberOfLines={4}
         style={[styles.input, styles.titleInput]}
       />
-      <TextInput
+      <DateTimeInput
         name="start"
         control={control}
-        rules={{ validate: validateDateTime, deps: ['end'] }}
-        mask={DATETIME_MASK}
+        rules={{ deps: ['end'] }}
         label="Início"
-        placeholder="DD/MM/AAAA HH:MM"
-        keyboardType="number-pad"
+        defaultTime={START_OF_DAY}
+        validRange={{ endDate: end ?? undefined }}
         style={styles.input}
       />
-      <TextInput
+      <DateTimeInput
         name="end"
         control={control}
         rules={{ validate: validateEnd }}
-        mask={DATETIME_MASK}
         label="Término"
-        placeholder="DD/MM/AAAA HH:MM"
-        keyboardType="number-pad"
+        defaultTime={END_OF_DAY}
+        validRange={{ startDate: start ?? undefined }}
         style={styles.input}
       />
       <SelectInput

@@ -75,6 +75,7 @@ Import navigation APIs (`ThemeProvider`, `DefaultTheme`, `DarkTheme`, etc.) from
 | Toast notifications    | `burnt`                                               |
 | Animations / Skeletons | `moti` (`moti/skeleton` needs `expo-linear-gradient`) |
 | Dates                  | `dayjs`                                               |
+| Date / time pickers    | `react-native-paper-dates`                            |
 | QR codes               | `react-native-qrcode-svg`                             |
 | Icons                  | `@expo/vector-icons` (Material Design icons)          |
 | Haptics                | `expo-haptics`                                        |
@@ -113,7 +114,7 @@ TypeScript interfaces for all domain objects: `profile`, `place`, `offer`, `plac
 
 ### Form Pattern
 
-All forms use `react-hook-form`. Controlled inputs live in `src/components/form/`: `text-input`, `phone-input`, `select-input`, `switch`. Phone and date fields use `react-native-mask-input` for formatting.
+All forms use `react-hook-form`. Controlled inputs live in `src/components/form/`: `text-input`, `phone-input`, `select-input`, `date-time-input`, `switch`. Phone and birth-date fields use `react-native-mask-input` for formatting. Date-time fields (e.g. an offer's start/end) use `date-time-input`, which holds a `Date | null` and opens `react-native-paper-dates` pickers; when no time is picked it applies its `defaultTime` (`START_OF_DAY` / `END_OF_DAY` in `src/constants.tsx`).
 
 ### Build Profiles (EAS)
 
