@@ -1,7 +1,9 @@
+import { File, UploadType } from 'expo-file-system';
+
 import ListModel from '@/models/list.model';
 import PlaceModel from '@/models/place.model';
 import ProfileModel from '@/models/profile.model';
-import HttpService from '@/services/http.service';
+import HttpService, { HttpError } from '@/services/http.service';
 
 const mockSearchableOwners: ProfileModel[] = [
   {
@@ -37,6 +39,16 @@ export interface PlacePayload {
 }
 
 export type PlaceImageType = 'logo' | 'photo';
+
+/** Image formats the API accepts for place photo/logo uploads. */
+export type PlaceImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
+
+/** Presigned upload issued by `PATCH /places/{id}/images/{type}`. */
+export interface PlaceImageUpload {
+  uploadUrl: string; // short-lived presigned S3 PUT URL
+  draftUrl: string; // public URL of the uploaded image, already set as the place's draft
+  expiresIn: number; // seconds until uploadUrl expires
+}
 
 export interface PlaceServiceFilter {
   published?: 'all' | boolean; // default true
@@ -130,23 +142,52 @@ const PlaceService = {
     );
   },
 
+  /**
+   * Issues a presigned S3 PUT URL for a new photo/logo. The API records the
+   * returned `draftUrl` as the place's `draftPhoto`/`draftLogo` right away.
+   */
+  requestImageUpload: async (
+    placeId: string,
+    type: PlaceImageType,
+    contentType: PlaceImageContentType,
+  ): Promise<PlaceImageUpload> =>
+    HttpService.patch<PlaceImageUpload>(
+      `/places/${encodeURIComponent(placeId)}/images/${type}`,
+      { contentType },
+    ),
+
+  /**
+   * Uploads a local image as the place's draft photo/logo and resolves with
+   * its draft URL. The live `photo`/`logo` only changes once it's approved.
+   */
   uploadImage: async (
     placeId: string,
-    _imageUri: string,
+    imageUri: string,
     type: PlaceImageType,
+    contentType: PlaceImageContentType,
   ): Promise<string> => {
-    // Mock: simulate upload latency
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const { uploadUrl, draftUrl } = await PlaceService.requestImageUpload(
+      placeId,
+      type,
+      contentType,
+    );
 
-    // Mock: return a stable fake CDN URL.
-    // ── Real API swap: replace this entire body with: ──────────────────────
-    // const formData = new FormData();
-    // formData.append('file', { uri: _imageUri, type: 'image/jpeg', name: `${type}.jpg` } as any);
-    // const res = await fetch(`/api/places/${placeId}/images/${type}`, { method: 'POST', body: formData });
-    // const json = await res.json();
-    // return json.url;
-    // ───────────────────────────────────────────────────────────────────────
-    return `https://picsum.photos/seed/${placeId}-${type}-${Date.now()}/400/400`;
+    // Straight to S3, not through HttpService: the URL carries its own
+    // signature, and S3 rejects a request that also sends our Bearer token.
+    const { status, body } = await new File(imageUri).upload(uploadUrl, {
+      httpMethod: 'PUT',
+      uploadType: UploadType.BINARY_CONTENT,
+      // Signed into the URL, so it must match what the API was asked for.
+      headers: { 'Content-Type': contentType },
+      sessionType: 'foreground',
+    });
+
+    // `upload` resolves for any completed response, including non-2xx.
+    if (status < 200 || status >= 300) {
+      throw new HttpError(status, `HTTP ${status}`, body);
+    }
+
+    return draftUrl;
   },
 };
 

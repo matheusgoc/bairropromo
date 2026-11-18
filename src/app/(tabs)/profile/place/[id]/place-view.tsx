@@ -61,6 +61,8 @@ const PlaceView: FC = () => {
   const handleUploadError = useCallback((e: Error) => {
     if (e.message === 'permission_denied') {
       ToastService.error('Permissão negada!', 'Habilite nas configurações.');
+    } else if (e.message === 'unsupported_type') {
+      ToastService.error('Formato não suportado!', 'Use JPG, PNG ou WEBP.');
     } else {
       ToastService.error('Erro ao enviar imagem!', 'Tente novamente.');
     }
@@ -182,6 +184,10 @@ const PlaceView: FC = () => {
     );
   }
 
+  // A pending (not yet approved) upload takes precedence over the live image.
+  const logo = place.draftLogo || place.logo;
+  const photo = place.draftPhoto || place.photo;
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -191,10 +197,10 @@ const PlaceView: FC = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.header}>
-          {place.logo || pendingLogo ? (
+          {logo || pendingLogo ? (
             <View style={styles.logoContainer}>
               <Image
-                source={pendingLogo ?? place.logo}
+                source={pendingLogo ?? logo}
                 contentFit="cover"
                 transition={1000}
                 alt={`Logo de ${place.name}.`}
@@ -228,10 +234,10 @@ const PlaceView: FC = () => {
             {place.name}
           </Text>
         </View>
-        {place.photo || pendingPhoto ? (
+        {photo || pendingPhoto ? (
           <View>
             <Image
-              source={pendingPhoto ?? place.photo}
+              source={pendingPhoto ?? photo}
               contentFit="cover"
               transition={1000}
               alt={`Foto de ${place.name}.`}

@@ -79,6 +79,9 @@ const PlaceItem: FC<PlaceItemProps> = memo(({ place }) => {
   const theme = useAppTheme();
   const styles = useStyles(theme);
 
+  // A pending (not yet approved) upload takes precedence over the live logo.
+  const logo = place.draftLogo || place.logo;
+
   const handlePress = () => {
     router.navigate({
       pathname: '/profile/place/[id]/place-view',
@@ -102,9 +105,9 @@ const PlaceItem: FC<PlaceItemProps> = memo(({ place }) => {
       )}
       onPress={handlePress}
       left={() =>
-        place.logo ? (
+        logo ? (
           <Image
-            source={place.logo}
+            source={logo}
             style={styles.logo}
             contentFit="cover"
             alt={`Logo de ${place.name}`}
