@@ -102,7 +102,7 @@ Thin business-logic layer consumed by React Query hooks:
 
 ### Data Models (`src/models/`)
 
-TypeScript interfaces for all domain objects: `profile`, `place`, `offer`, `place-location`, `category`, `list` (generic paginated response).
+TypeScript interfaces for all domain objects: `profile`, `place`, `offer`, `place-location`, `place-owner`, `category`, `list` (generic paginated response).
 
 ### Custom Hooks (`src/hooks/`)
 

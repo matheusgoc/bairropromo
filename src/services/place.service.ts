@@ -1,35 +1,9 @@
 import { File, UploadType } from 'expo-file-system';
 
 import ListModel from '@/models/list.model';
+import PlaceOwnerModel from '@/models/place-owner.model';
 import PlaceModel from '@/models/place.model';
-import ProfileModel from '@/models/profile.model';
 import HttpService, { HttpError } from '@/services/http.service';
-
-const mockSearchableOwners: ProfileModel[] = [
-  {
-    id: 'owner-1',
-    name: 'João Silva',
-    email: 'joao@exemplo.com',
-    role: 'owner',
-    subscriptionStatus: 'success',
-  },
-  {
-    id: 'owner-2',
-    name: 'Maria Santos',
-    email: 'maria@exemplo.com',
-    role: 'owner',
-    subscriptionStatus: 'success',
-  },
-  {
-    id: 'owner-3',
-    name: 'Carlos Oliveira',
-    email: 'carlos@exemplo.com',
-    role: 'owner',
-    subscriptionStatus: 'success',
-  },
-];
-
-const mockPlaceOwners = new Map<string, ProfileModel[]>();
 
 export interface PlacePayload {
   name: string;
@@ -40,10 +14,10 @@ export interface PlacePayload {
 
 export type PlaceImageType = 'logo' | 'photo';
 
-/** Image formats the API accepts for place photo/logo uploads. */
+// Image formats the API accepts for place photo/logo uploads
 export type PlaceImageContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
-/** Presigned upload issued by `PATCH /places/{id}/images/{type}`. */
+// Presigned upload issued by `PATCH /places/{id}/images/{type}`
 export interface PlaceImageUpload {
   uploadUrl: string; // short-lived presigned S3 PUT URL
   draftUrl: string; // public URL of the uploaded image, already set as the place's draft
@@ -58,11 +32,6 @@ export interface PlaceServiceFilter {
   };
 }
 
-/**
- * Leaves blank optional fields out of the request body: the API rejects
- * empty strings on update (`FIELD_EMPTY`), and `undefined` keys are dropped
- * by `JSON.stringify`.
- */
 const toPlaceBody = (data: PlacePayload): PlacePayload => ({
   name: data.name.trim(),
   category: data.category?.trim() || undefined,
@@ -109,42 +78,33 @@ const PlaceService = {
   unpublish: async (id: string): Promise<void> =>
     HttpService.patch<void>(`/places/${encodeURIComponent(id)}/unpublish`),
 
-  searchOwner: async (email: string): Promise<ProfileModel | null> => {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    return (
-      mockSearchableOwners.find(
-        (o) => o.email.toLowerCase() === email.trim().toLowerCase(),
-      ) ?? null
+  listOwners: async (placeId: string): Promise<PlaceOwnerModel[]> => {
+    const { data } = await HttpService.get<{ data: PlaceOwnerModel[] }>(
+      `/places/${encodeURIComponent(placeId)}/owners`,
     );
+
+    return data;
   },
 
-  listOwners: async (placeId: string): Promise<ProfileModel[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return mockPlaceOwners.get(placeId) ?? [];
-  },
+  findOwner: async (placeId: string, email: string): Promise<PlaceOwnerModel> =>
+    HttpService.patch<PlaceOwnerModel>(
+      `/places/${encodeURIComponent(placeId)}/owners/find`,
+      { email: email.trim() },
+    ),
 
-  associateOwner: async (placeId: string, ownerId: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const owner = mockSearchableOwners.find((o) => o.id === ownerId);
-    if (!owner) return;
-    const current = mockPlaceOwners.get(placeId) ?? [];
-    if (!current.find((o) => o.id === ownerId)) {
-      mockPlaceOwners.set(placeId, [...current, owner]);
-    }
-  },
+  grantOwner: async (placeId: string, ownerId: string): Promise<void> =>
+    HttpService.patch<void>(`/places/${encodeURIComponent(placeId)}/grant`, {
+      owner: ownerId,
+    }),
 
-  disconnectOwner: async (placeId: string, ownerId: string): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const current = mockPlaceOwners.get(placeId) ?? [];
-    mockPlaceOwners.set(
-      placeId,
-      current.filter((o) => o.id !== ownerId),
-    );
-  },
+  revokeOwner: async (placeId: string, ownerId: string): Promise<void> =>
+    HttpService.patch<void>(`/places/${encodeURIComponent(placeId)}/revoke`, {
+      owner: ownerId,
+    }),
 
   /**
-   * Issues a presigned S3 PUT URL for a new photo/logo. The API records the
-   * returned `draftUrl` as the place's `draftPhoto`/`draftLogo` right away.
+   * Issues a presigned S3 PUT URL for a new photo/logo
+   * The API records the returned `draftUrl` as the place's `draftPhoto`/`draftLogo` right away
    */
   requestImageUpload: async (
     placeId: string,
@@ -157,8 +117,8 @@ const PlaceService = {
     ),
 
   /**
-   * Uploads a local image as the place's draft photo/logo and resolves with
-   * its draft URL. The live `photo`/`logo` only changes once it's approved.
+   * Uploads a local image as the place's draft photo/logo and resolves with its draft URL
+   * The live `photo`/`logo` only changes once it's approved
    */
   uploadImage: async (
     placeId: string,
@@ -172,12 +132,11 @@ const PlaceService = {
       contentType,
     );
 
-    // Straight to S3, not through HttpService: the URL carries its own
-    // signature, and S3 rejects a request that also sends our Bearer token.
+    // Straight to S3
     const { status, body } = await new File(imageUri).upload(uploadUrl, {
       httpMethod: 'PUT',
       uploadType: UploadType.BINARY_CONTENT,
-      // Signed into the URL, so it must match what the API was asked for.
+      // content type must match what the API was asked for
       headers: { 'Content-Type': contentType },
       sessionType: 'foreground',
     });

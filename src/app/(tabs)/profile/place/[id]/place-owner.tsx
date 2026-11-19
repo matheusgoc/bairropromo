@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Avatar,
+  Button,
   Divider,
   IconButton,
   List,
@@ -14,17 +15,22 @@ import {
 } from 'react-native-paper';
 
 import Dialog from '@/components/ui/dialog';
+import EmptyState from '@/components/ui/empty-state';
 import useAppTheme from '@/hooks/use-app-theme';
-import ProfileModel from '@/models/profile.model';
+import PlaceOwnerModel from '@/models/place-owner.model';
+import { HttpError, retryUnlessClientError } from '@/services/http.service';
 import PlaceService from '@/services/place.service';
 import ToastService from '@/services/toast.service';
 import { DefaultTheme } from '@/types';
 
+const isHttpStatus = (e: Error, ...statuses: number[]) =>
+  e instanceof HttpError && statuses.includes(e.status);
+
 // ─── Owner List Item ─────────────────────────────────────────────────────────
 
 interface OwnerItemProps {
-  owner: ProfileModel;
-  onRemove: (owner: ProfileModel) => void;
+  owner: PlaceOwnerModel;
+  onRemove: (owner: PlaceOwnerModel) => void;
   disabled: boolean;
   theme: DefaultTheme;
 }
@@ -81,44 +87,87 @@ const PlaceOwner: FC = () => {
   const queryClient = useQueryClient();
 
   const [email, setEmail] = useState('');
-  const [foundOwner, setFoundOwner] = useState<ProfileModel | null>(null);
-  const [ownerToRemove, setOwnerToRemove] = useState<ProfileModel | null>(null);
+  const [foundOwner, setFoundOwner] = useState<PlaceOwnerModel | null>(null);
+  const [ownerToRemove, setOwnerToRemove] = useState<PlaceOwnerModel | null>(
+    null,
+  );
   const [associateDialogVisible, setAssociateDialogVisible] = useState(false);
   const [removeDialogVisible, setRemoveDialogVisible] = useState(false);
 
-  const { data: owners = [], isPending: isLoadingOwners } = useQuery({
+  const {
+    data: owners = [],
+    isPending: isLoadingOwners,
+    isError: isOwnersError,
+    isRefetching: isRefetchingOwners,
+    refetch: refetchOwners,
+  } = useQuery({
     queryKey: ['place-owners', id],
     queryFn: () => PlaceService.listOwners(id),
+    retry: retryUnlessClientError,
   });
 
-  const { mutate: searchOwner, isPending: isSearching } = useMutation({
-    mutationFn: (searchEmail: string) => PlaceService.searchOwner(searchEmail),
+  const invalidateOwners = () =>
+    queryClient.invalidateQueries({ queryKey: ['place-owners', id] });
+
+  const { mutate: findOwner, isPending: isSearching } = useMutation({
+    mutationFn: (searchEmail: string) =>
+      PlaceService.findOwner(id, searchEmail),
     onSuccess: (owner) => {
-      if (owner) {
-        setFoundOwner(owner);
-        setAssociateDialogVisible(true);
-      } else {
+      setFoundOwner(owner);
+      setAssociateDialogVisible(true);
+    },
+    onError: (e) => {
+      if (isHttpStatus(e, 404)) {
         ToastService.error('Nenhuma pessoa encontrada!');
+      } else if (isHttpStatus(e, 409)) {
+        ToastService.warn('Essa pessoa já é proprietária deste local!');
+      } else {
+        ToastService.error('Erro ao buscar proprietário!');
+        console.error(e);
       }
     },
   });
 
-  const { mutate: associateOwner, isPending: isAssociating } = useMutation({
-    mutationFn: (ownerId: string) => PlaceService.associateOwner(id, ownerId),
+  const { mutate: grantOwner, isPending: isGranting } = useMutation({
+    mutationFn: (ownerId: string) => PlaceService.grantOwner(id, ownerId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['place-owners', id] });
+      invalidateOwners();
       ToastService.success('Proprietário associado com sucesso!');
       setEmail('');
       setFoundOwner(null);
     },
+    onError: (e) => {
+      setFoundOwner(null);
+      if (isHttpStatus(e, 409)) {
+        // Someone else granted them meanwhile: the list is stale.
+        invalidateOwners();
+        ToastService.warn('Essa pessoa já é proprietária deste local!');
+      } else {
+        ToastService.error('Erro ao associar proprietário!');
+        console.error(e);
+      }
+    },
   });
 
-  const { mutate: disconnectOwner, isPending: isDisconnecting } = useMutation({
-    mutationFn: (ownerId: string) => PlaceService.disconnectOwner(id, ownerId),
+  const { mutate: revokeOwner, isPending: isRevoking } = useMutation({
+    mutationFn: (ownerId: string) => PlaceService.revokeOwner(id, ownerId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['place-owners', id] });
+      invalidateOwners();
       ToastService.success('Proprietário removido!');
       setOwnerToRemove(null);
+    },
+    onError: (e) => {
+      setOwnerToRemove(null);
+      if (isHttpStatus(e, 403)) {
+        ToastService.error(
+          'Apenas um administrador pode remover o criador do local!',
+        );
+        return;
+      }
+      // 404 (no longer an owner) / 409 (owners changed): the list is stale.
+      if (isHttpStatus(e, 404, 409)) invalidateOwners();
+      ToastService.error('Erro ao remover proprietário!');
+      console.error(e);
     },
   });
 
@@ -128,15 +177,15 @@ const PlaceOwner: FC = () => {
       ToastService.error('Informe um e-mail para buscar.');
       return;
     }
-    searchOwner(trimmed);
+    findOwner(trimmed);
   };
 
-  const handleRemovePress = (owner: ProfileModel) => {
+  const handleRemovePress = (owner: PlaceOwnerModel) => {
     setOwnerToRemove(owner);
     setRemoveDialogVisible(true);
   };
 
-  const isBusy = isSearching || isAssociating || isDisconnecting;
+  const isBusy = isSearching || isGranting || isRevoking;
 
   return (
     <View style={styles.container}>
@@ -195,6 +244,24 @@ const PlaceOwner: FC = () => {
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
         </View>
+      ) : isOwnersError ? (
+        <View style={styles.centered}>
+          <EmptyState
+            icon="cloud-alert-outline"
+            title="Erro ao carregar os proprietários!"
+            subtitle="Verifique sua conexão e tente novamente."
+          >
+            <Button
+              mode="contained"
+              icon="refresh"
+              loading={isRefetchingOwners}
+              disabled={isRefetchingOwners}
+              onPress={() => refetchOwners()}
+            >
+              Tentar novamente
+            </Button>
+          </EmptyState>
+        </View>
       ) : owners.length === 0 ? (
         <View style={styles.centered}>
           <Avatar.Icon
@@ -207,7 +274,7 @@ const PlaceOwner: FC = () => {
             variant="bodyMedium"
             style={{ color: theme.colors.outline, marginTop: 12 }}
           >
-            Nenhum proprietário associado.
+            Nenhum outro proprietário associado.
           </Text>
         </View>
       ) : (
@@ -235,7 +302,7 @@ const PlaceOwner: FC = () => {
         }}
         mode="default"
         title="Proprietário encontrado"
-        message="Encontramos a pessoa com esse email. Gostaria de torná-lo parte da loja?"
+        message={`Encontramos ${foundOwner?.name ?? ''} (${foundOwner?.email ?? ''}). Gostaria de torná-lo proprietário deste local?`}
         actions={[
           {
             label: 'Cancelar',
@@ -249,7 +316,7 @@ const PlaceOwner: FC = () => {
             isPrimary: true,
             callback: () => {
               setAssociateDialogVisible(false);
-              if (foundOwner) associateOwner(foundOwner.id);
+              if (foundOwner) grantOwner(foundOwner.id);
             },
           },
         ]}
@@ -278,7 +345,7 @@ const PlaceOwner: FC = () => {
             isPrimary: true,
             callback: () => {
               setRemoveDialogVisible(false);
-              if (ownerToRemove) disconnectOwner(ownerToRemove.id);
+              if (ownerToRemove) revokeOwner(ownerToRemove.id);
             },
           },
         ]}
