@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { END_OF_DAY, START_OF_DAY } from './constants';
-import { timeOf, toIsoDateTime, withTime } from './helpers';
+import { formatCountdown, timeOf, toIsoDateTime, withTime } from './helpers';
 
 // 18/11/2026 14:37:12.345, local time.
 const DATE = new Date(2026, 10, 18, 14, 37, 12, 345);
@@ -47,5 +47,25 @@ describe('toIsoDateTime', () => {
     expect(new Date(iso!).getTime()).toBe(
       new Date(2026, 10, 18, 23, 59, 59).getTime(),
     );
+  });
+});
+
+describe('formatCountdown', () => {
+  it('formats whole minutes', () => {
+    expect(formatCountdown(60)).toBe('1:00');
+  });
+
+  it('pads seconds to two digits', () => {
+    expect(formatCountdown(9)).toBe('0:09');
+    expect(formatCountdown(75)).toBe('1:15');
+  });
+
+  it('never goes below zero', () => {
+    expect(formatCountdown(0)).toBe('0:00');
+    expect(formatCountdown(-5)).toBe('0:00');
+  });
+
+  it('rounds partial seconds up', () => {
+    expect(formatCountdown(59.2)).toBe('1:00');
   });
 });

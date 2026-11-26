@@ -42,3 +42,10 @@ export function timeOf(date: Date): TimeOfDay {
 export function toIsoDateTime(date?: Date | null): string | undefined {
   return date ? dayjs(date).format() : undefined;
 }
+
+/** Seconds as `m:ss` for countdowns (e.g. `60` → `1:00`, `9` → `0:09`). */
+export function formatCountdown(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.ceil(totalSeconds));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}

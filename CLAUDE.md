@@ -77,6 +77,7 @@ Import navigation APIs (`ThemeProvider`, `DefaultTheme`, `DarkTheme`, etc.) from
 | Dates                  | `dayjs`                                               |
 | Date / time pickers    | `react-native-paper-dates`                            |
 | QR codes               | `react-native-qrcode-svg`                             |
+| Confirmation codes     | `react-native-confirmation-code-field`                |
 | Icons                  | `@expo/vector-icons` (Material Design icons)          |
 | Haptics                | `expo-haptics`                                        |
 
@@ -88,8 +89,10 @@ Main tabs: **Offer**, **Place**, **Profile**. The Profile tab contains nested bu
 
 ### Onboarding Flow (`src/app/onboard/`)
 
-Nine-screen sequence shown only on first launch:
-`welcome → call → gate → signin → reset → signup → password → apply → success`
+Ten-screen sequence shown only on first launch:
+`welcome → call → gate → signin → reset → signup → password → confirmation → apply → success`
+
+`onboard-confirmation` takes the 6-digit email code (Cognito sign-up confirmation, mocked for now in `ProfileService.confirmSignup`: `123456` succeeds, `000000` is expired, anything else is invalid).
 
 ### Services (`src/services/`)
 
@@ -111,10 +114,11 @@ TypeScript interfaces for all domain objects: `profile`, `place`, `offer`, `plac
 - `use-app-theme` — project-scoped wrapper around `useTheme()`
 - `use-place-image-upload` — image picker + upload for place photos
 - `use-snackbar` — imperative snackbar API
+- `use-countdown` — seconds countdown with `restart()` (e.g. resend-code timers)
 
 ### Form Pattern
 
-All forms use `react-hook-form`. Controlled inputs live in `src/components/form/`: `text-input`, `phone-input`, `select-input`, `date-time-input`, `switch`. Phone and birth-date fields use `react-native-mask-input` for formatting. Date-time fields (e.g. an offer's start/end) use `date-time-input`, which holds a `Date | null` and opens `react-native-paper-dates` pickers; when no time is picked it applies its `defaultTime` (`START_OF_DAY` / `END_OF_DAY` in `src/constants.tsx`).
+All forms use `react-hook-form`. Controlled inputs live in `src/components/form/`: `text-input`, `phone-input`, `select-input`, `date-time-input`, `switch`, `code-input` (one cell per digit, via `react-native-confirmation-code-field`). Phone and birth-date fields use `react-native-mask-input` for formatting. Date-time fields (e.g. an offer's start/end) use `date-time-input`, which holds a `Date | null` and opens `react-native-paper-dates` pickers; when no time is picked it applies its `defaultTime` (`START_OF_DAY` / `END_OF_DAY` in `src/constants.tsx`).
 
 ### Build Profiles (EAS)
 

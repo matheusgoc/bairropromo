@@ -90,6 +90,10 @@ const Router: FC = () => (
       options={{ headerShown: false }}
     />
     <Stack.Screen
+      name="onboard/onboard-confirmation"
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
       name="onboard/onboard-apply"
       options={{ headerShown: false }}
     />

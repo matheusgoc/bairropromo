@@ -26,10 +26,35 @@ export interface ProfileFormPayload {
   gender?: ProfileModel['gender'] | '';
 }
 
+export interface ConfirmSignupPayload {
+  code: string;
+}
+
 export interface AuthResponse {
   token: string;
   profile: ProfileModel;
 }
+
+/**
+ * Mocked sign-up confirmation codes. Any code other than `success` or
+ * `expired` behaves like `invalid`.
+ */
+export const MOCK_CONFIRMATION_CODES = {
+  success: '123456',
+  expired: '000000',
+  invalid: '111111',
+} as const;
+
+/**
+ * Cognito exception names, as Amplify exposes them on `error.name`.
+ * The mock throws the same names so screens won't change when Amplify
+ * replaces it.
+ */
+export const EXPIRED_CODE_ERROR = 'ExpiredCodeException';
+export const CODE_MISMATCH_ERROR = 'CodeMismatchException';
+
+const authError = (name: string, message: string) =>
+  Object.assign(new Error(message), { name });
 
 const mockProfile: ProfileModel = {
   id: '1',
@@ -72,6 +97,19 @@ const ProfileService = {
       token: 'mock-token-abc123',
       profile: { ...mockProfile, name: data.name, email: data.email },
     };
+  },
+
+  confirmSignup: async ({ code }: ConfirmSignupPayload): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (code === MOCK_CONFIRMATION_CODES.success) return;
+    if (code === MOCK_CONFIRMATION_CODES.expired) {
+      throw authError(EXPIRED_CODE_ERROR, 'Confirmation code has expired.');
+    }
+    throw authError(CODE_MISMATCH_ERROR, 'Invalid confirmation code.');
+  },
+
+  resendSignupCode: async (): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   },
 
   apply: async (_data: ApplyPayload): Promise<ProfileModel> => {

@@ -74,7 +74,7 @@ const OnboardPassword: FC = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: (data: PasswordPayload) => ProfileService.setPassword(data),
     onSuccess: () => {
-      router.push('/onboard/onboard-apply');
+      router.push('/onboard/onboard-confirmation');
     },
     onError: () => {
       ToastService.error('Não foi possível definir a senha. Tente novamente.');
